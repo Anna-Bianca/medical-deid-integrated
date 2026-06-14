@@ -1,0 +1,73 @@
+# Arquitectura final
+
+## Resumen
+
+La solucion integrada toma lo mejor de los dos enfoques previos:
+
+- YOLO para localizar regiones candidatas de PII
+- OCR robusto multi-pass para validar y leer texto dentro de cada ROI
+- politica de decision por clase y evidencia OCR
+- redaccion final sobre la imagen
+- exposicion por CLI, API y UI
+
+## Flujo end-to-end
+
+```text
+full_dataset/hackathon_TREE_AIBiomed
+  -> app.cli train / app.train
+  -> outputs/train_runs/
+  -> models/best.pt
+  -> detector YOLO
+  -> OCR robusto por ROI
+  -> politica de decision
+  -> redaccion
+  -> reporte JSON
+  -> API / UI / batch CLI
+```
+
+## Fuente de verdad
+
+El entrenamiento y la validacion usan exclusivamente:
+
+```text
+full_dataset/hackathon_TREE_AIBiomed
+```
+
+Ese directorio no se versiona por privacidad, pero forma parte del contrato operativo del repo.
+
+## Modulos principales
+
+- `app/train.py`
+  Entrenamiento reproducible con la receta historica y copia automatica de `best.pt`.
+
+- `app/core/detector_yolo.py`
+  Localiza regiones candidatas y valida que el modelo cargado este alineado con las clases medicas esperadas.
+
+- `app/core/ocr_engine.py`
+  Ejecuta OCR multi-pass con variantes de preprocesamiento, validacion por confianza, repeticion e IoU.
+
+- `app/core/decision_policy.py`
+  Decide `redact` o `review`.
+
+- `app/core/redactor.py`
+  Ennegrece regiones marcadas para redaccion.
+
+- `app/core/pipeline.py`
+  Orquesta detector, OCR, decision y redaccion.
+
+- `app/api.py`
+  Expone endpoints HTTP y la UI estatica.
+
+- `app/cli.py`
+  Expone entrenamiento, visualizacion, smoke, run y serve.
+
+## Politica funcional v1
+
+- `name`, `id`, `age` -> `redact`
+- `date`, `time`
+  - `redact` si OCR confirma patron legible
+  - `review` si OCR es ambiguo o insuficiente
+
+## Fallback
+
+Si YOLO no detecta regiones y el fallback esta activo, se corre OCR full-image. En v1 esto sirve para diagnostico y reporte, no para redactar sin cajas.

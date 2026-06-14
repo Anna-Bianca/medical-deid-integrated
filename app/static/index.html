@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medical DeID Integrated</title>
+  <style>
+    :root {
+      --bg: #0f1418;
+      --panel: #162028;
+      --panel-2: #1d2933;
+      --text: #e6edf3;
+      --muted: #94a3b8;
+      --accent: #7dd3fc;
+      --danger: #fb7185;
+      --warn: #fbbf24;
+      --ok: #34d399;
+      --border: #2b3946;
+      --name: #fb923c;
+      --id: #10b981;
+      --age: #60a5fa;
+      --date: #a78bfa;
+      --time: #22d3ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #162230 0%, var(--bg) 52%);
+      color: var(--text);
+    }
+    header, main, footer {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+    header {
+      padding: 28px 0 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .title h1 { margin: 0; font-size: 24px; }
+    .title p { margin: 6px 0 0; color: var(--muted); }
+    .badge {
+      border: 1px solid var(--ok);
+      color: var(--ok);
+      padding: 6px 10px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    main { padding: 24px 0 36px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      padding: 18px;
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .dropzone {
+      border: 1px dashed var(--border);
+      padding: 32px 18px;
+      text-align: center;
+      background: rgba(255,255,255,0.02);
+    }
+    .dropzone.drag { border-color: var(--accent); }
+    .dropzone input { display: none; }
+    button, .ghost {
+      border: none;
+      background: var(--accent);
+      color: #032531;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .ghost {
+      display: inline-block;
+      text-decoration: none;
+      margin-top: 12px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .controls label { color: var(--muted); font-size: 14px; }
+    .status { margin-top: 10px; color: var(--muted); min-height: 20px; }
+    .pipeline {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .pipeline span {
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .metric {
+      border: 1px solid var(--border);
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .comparison figure {
+      margin: 0;
+      background: #0e151a;
+      border: 1px solid var(--border);
+      padding: 10px;
+    }
+    .comparison img {
+      width: 100%;
+      display: block;
+      background: #050709;
+    }
+    .comparison figcaption {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; }
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .pill-name { background: rgba(251,146,60,.15); color: var(--name); }
+    .pill-id { background: rgba(16,185,129,.15); color: var(--id); }
+    .pill-age { background: rgba(96,165,250,.15); color: var(--age); }
+    .pill-date { background: rgba(167,139,250,.15); color: var(--date); }
+    .pill-time { background: rgba(34,211,238,.15); color: var(--time); }
+    .decision-redact { color: var(--danger); font-weight: 700; }
+    .decision-review { color: var(--warn); font-weight: 700; }
+    .fallback {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+      white-space: pre-wrap;
+    }
+    footer {
+      padding: 0 0 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 900px) {
+      .grid, .comparison, .summary { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <h1>Medical DeID Integrated</h1>
+      <p>Entrenamiento YOLO, OCR robusto, politica de decision y redaccion en un solo proyecto.</p>
+    </div>
+    <div class="badge">YOLO -> OCR -> DECISION -> REDACTION</div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>Procesar Imagen</h2>
+      <label class="dropzone" id="dropzone">
+        <input id="fileInput" type="file" accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff" />
+        <div>Arrastra una imagen medica aqui o hace click para seleccionarla.</div>
+      </label>
+      <div class="controls">
+        <button id="runBtn" disabled>Ejecutar Pipeline</button>
+        <label><input id="fallbackToggle" type="checkbox" /> Activar fallback OCR full-image</label>
+        <span id="selectedFile"></span>
+      </div>
+      <div class="status" id="statusLine"></div>
+      <div class="pipeline">
+        <span>1. Entrenamiento</span>
+        <span>2. Deteccion</span>
+        <span>3. OCR</span>
+        <span>4. Decision</span>
+        <span>5. Redaccion</span>
+      </div>
+
+      <div class="summary" id="summaryPanel" hidden>
+        <div class="metric"><strong id="regionsFound">0</strong><span>Regiones</span></div>
+        <div class="metric"><strong id="regionsRedacted">0</strong><span>Redactadas</span></div>
+        <div class="metric"><strong id="regionsReview">0</strong><span>Review</span></div>
+        <div class="metric"><strong id="processingTime">0s</strong><span>Tiempo</span></div>
+      </div>
+
+      <div class="comparison" id="comparisonPanel" hidden>
+        <figure>
+          <figcaption>Original</figcaption>
+          <img id="originalImg" alt="Original" />
+        </figure>
+        <figure>
+          <figcaption>Redactada</figcaption>
+          <img id="redactedImg" alt="Redactada" />
+        </figure>
+      </div>
+
+      <a class="ghost" id="downloadLink" hidden>Descargar imagen redactada</a>
+      <div class="fallback" id="fallbackPanel" hidden></div>
+    </section>
+
+    <section class="card">
+      <h2>Detecciones</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Clase</th>
+            <th>OCR</th>
+            <th>Conf YOLO</th>
+            <th>Decision</th>
+            <th>Razon</th>
+          </tr>
+        </thead>
+        <tbody id="detectionsBody">
+          <tr><td colspan="5">Todavia no se proceso ninguna imagen.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    Proyecto integrado para entender tanto el producto final como el proceso tecnico que llevo a el.
+  </footer>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const runBtn = document.getElementById('runBtn');
+    const fallbackToggle = document.getElementById('fallbackToggle');
+    const selectedFile = document.getElementById('selectedFile');
+    const statusLine = document.getElementById('statusLine');
+    const summaryPanel = document.getElementById('summaryPanel');
+    const comparisonPanel = document.getElementById('comparisonPanel');
+    const originalImg = document.getElementById('originalImg');
+    const redactedImg = document.getElementById('redactedImg');
+    const downloadLink = document.getElementById('downloadLink');
+    const fallbackPanel = document.getElementById('fallbackPanel');
+    const detectionsBody = document.getElementById('detectionsBody');
+    const regionsFound = document.getElementById('regionsFound');
+    const regionsRedacted = document.getElementById('regionsRedacted');
+    const regionsReview = document.getElementById('regionsReview');
+    const processingTime = document.getElementById('processingTime');
+
+    let currentFile = null;
+
+    const pillClass = {
+      name: 'pill-name',
+      id: 'pill-id',
+      age: 'pill-age',
+      date: 'pill-date',
+      time: 'pill-time'
+    };
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) {
+        loadFile(fileInput.files[0]);
+      }
+    });
+
+    dropzone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropzone.classList.add('drag');
+    });
+
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+
+    dropzone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('drag');
+      if (event.dataTransfer.files[0]) {
+        loadFile(event.dataTransfer.files[0]);
+      }
+    });
+
+    function loadFile(file) {
+      currentFile = file;
+      selectedFile.textContent = file.name;
+      runBtn.disabled = false;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        originalImg.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function processFile() {
+      if (!currentFile) return;
+      statusLine.textContent = 'Ejecutando pipeline integrado...';
+      const formData = new FormData();
+      formData.append('file', currentFile);
+      try {
+        const query = fallbackToggle.checked ? '?enable_fallback=true' : '';
+        const imageResponse = await fetch(`/deidentify${query}`, { method: 'POST', body: formData });
+        if (!imageResponse.ok) {
+          throw new Error(`HTTP ${imageResponse.status}`);
+        }
+        const report = JSON.parse(imageResponse.headers.get('X-Report'));
+        const imageBlob = await imageResponse.blob();
+        const imageUrl = URL.createObjectURL(imageBlob);
+
+        redactedImg.src = imageUrl;
+        downloadLink.href = imageUrl;
+        downloadLink.download = `redacted_${currentFile.name}`;
+        downloadLink.hidden = false;
+
+        regionsFound.textContent = report.summary.regions_found;
+        regionsRedacted.textContent = report.summary.redacted;
+        regionsReview.textContent = report.summary.review;
+        processingTime.textContent = `${report.processing_time_s}s`;
+        summaryPanel.hidden = false;
+        comparisonPanel.hidden = false;
+
+        if (fallbackToggle.checked) {
+          fallbackPanel.hidden = false;
+          if (report.fallback_used && report.fallback_ocr && report.fallback_ocr.text) {
+            fallbackPanel.textContent = `Fallback OCR usado.\nTexto detectado:\n${report.fallback_ocr.text}`;
+          } else if (report.fallback_used) {
+            fallbackPanel.textContent = 'Fallback OCR usado, pero no produjo texto legible.';
+          } else {
+            fallbackPanel.textContent = 'Fallback OCR no fue necesario.';
+          }
+        } else {
+          fallbackPanel.hidden = true;
+        }
+
+        renderDetections(report.detections);
+        statusLine.textContent = 'Pipeline finalizado.';
+      } catch (error) {
+        statusLine.textContent = `Error: ${error.message}`;
+      }
+    }
+
+    function renderDetections(detections) {
+      if (!detections.length) {
+        detectionsBody.innerHTML = '<tr><td colspan="5">No se detectaron regiones sensibles.</td></tr>';
+        return;
+      }
+      detectionsBody.innerHTML = detections.map((detection) => `
+        <tr>
+          <td><span class="pill ${pillClass[detection.class_name] || ''}">${detection.class_name.toUpperCase()}</span></td>
+          <td>${escapeHtml(detection.ocr_text || '') || 'Sin OCR legible'}</td>
+          <td>${Math.round(detection.detector_conf * 100)}%</td>
+          <td class="decision-${detection.decision}">${detection.decision.toUpperCase()}</td>
+          <td>${escapeHtml(detection.reason)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    runBtn.addEventListener('click', processFile);
+  </script>
+</body>
+</html>

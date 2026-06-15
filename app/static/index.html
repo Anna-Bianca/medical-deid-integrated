@@ -3,722 +3,404 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MedDeID — Desidentificación de Imágenes Médicas</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <title>Medical DeID Integrated</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:         #0a0f14;
-      --surface:    #111820;
-      --border:     #1e2d3d;
-      --accent:     #00d4ff;
-      --accent-dim: #00d4ff22;
-      --danger:     #ff4d6d;
-      --warn:       #fbbf24;
-      --success:    #00e096;
-      --text:       #c8d8e8;
-      --text-dim:   #5a7a8a;
-      --mono:       'IBM Plex Mono', monospace;
-      --sans:       'IBM Plex Sans', sans-serif;
-
-      --name-color: #ff9f43;
-      --id-color:   #00e096;
-      --age-color:  #74b9ff;
-      --date-color: #a29bfe;
-      --time-color: #00d4ff;
+      --bg: #0f1418;
+      --panel: #162028;
+      --panel-2: #1d2933;
+      --text: #e6edf3;
+      --muted: #94a3b8;
+      --accent: #7dd3fc;
+      --danger: #fb7185;
+      --warn: #fbbf24;
+      --ok: #34d399;
+      --border: #2b3946;
+      --name: #fb923c;
+      --id: #10b981;
+      --age: #60a5fa;
+      --date: #a78bfa;
+      --time: #22d3ee;
     }
-
+    * { box-sizing: border-box; }
     body {
-      background: var(--bg);
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #162230 0%, var(--bg) 52%);
       color: var(--text);
-      font-family: var(--sans);
-      font-weight: 300;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
     }
-
-    /* HEADER */
+    header, main, footer {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
     header {
-      border-bottom: 1px solid var(--border);
-      padding: 20px 40px;
+      padding: 28px 0 18px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      border-bottom: 1px solid var(--border);
     }
-
-    .logo-mark {
-      width: 32px;
-      height: 32px;
-      border: 1.5px solid var(--accent);
+    .title h1 { margin: 0; font-size: 24px; }
+    .title p { margin: 6px 0 0; color: var(--muted); }
+    .badge {
+      border: 1px solid var(--ok);
+      color: var(--ok);
+      padding: 6px 10px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    main { padding: 24px 0 36px; }
+    .grid {
       display: grid;
-      place-items: center;
-      flex-shrink: 0;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
     }
-
-    .logo-mark svg { width: 18px; height: 18px; }
-
-    .logo-text {
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      padding: 18px;
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       color: var(--accent);
     }
-
-    .logo-sub {
-      font-size: 11px;
-      color: var(--text-dim);
-      letter-spacing: 0.08em;
-      margin-top: 2px;
-    }
-
-
-    /* MAIN */
-    main {
-      flex: 1;
-      max-width: 1200px;
-      margin: 0 auto;
-      width: 100%;
-      padding: 48px 40px;
-    }
-
-    /* UPLOAD */
-    .upload-section { margin-bottom: 48px; }
-
-    .upload-zone {
+    .dropzone {
       border: 1px dashed var(--border);
-      padding: 56px 40px;
+      padding: 32px 18px;
       text-align: center;
+      background: rgba(255,255,255,0.02);
+    }
+    .dropzone.drag { border-color: var(--accent); }
+    .dropzone input { display: none; }
+    button, .ghost {
+      border: none;
+      background: var(--accent);
+      color: #032531;
+      padding: 12px 16px;
       cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative;
+      font-weight: 700;
     }
-
-    .upload-zone:hover,
-    .upload-zone.drag-over {
-      border-color: var(--accent);
-      background: var(--accent-dim);
+    .ghost {
+      display: inline-block;
+      text-decoration: none;
+      margin-top: 12px;
     }
-
-    .upload-zone.has-file {
-      border-style: solid;
-      border-color: var(--accent);
-      background: var(--accent-dim);
-    }
-
-    .upload-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-
-    .upload-icon {
-      width: 48px;
-      height: 48px;
-      margin: 0 auto 20px;
-      border: 1px solid var(--border);
-      display: grid;
-      place-items: center;
-      color: var(--text-dim);
-    }
-
-    .upload-label {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text-dim);
-      letter-spacing: 0.06em;
-    }
-
-    .upload-label span { color: var(--accent); text-decoration: underline; }
-
-    .upload-hint {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 8px;
-      letter-spacing: 0.04em;
-    }
-
-    /* CONTROLS */
-    .action-row {
+    .controls {
       display: flex;
+      gap: 10px;
       align-items: center;
-      gap: 16px;
-      margin-top: 20px;
+      margin-top: 14px;
       flex-wrap: wrap;
     }
-
-    .btn {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      padding: 14px 32px;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); color: var(--bg); }
-    .btn-primary:hover:not(:disabled) { opacity: 0.85; }
-
-    .fallback-label {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
+    .controls label { color: var(--muted); font-size: 14px; }
+    .status { margin-top: 10px; color: var(--muted); min-height: 20px; }
+    .pipeline {
       display: flex;
-      align-items: center;
       gap: 8px;
-      cursor: pointer;
-      letter-spacing: 0.04em;
+      flex-wrap: wrap;
+      margin-top: 12px;
     }
-
-    .fallback-label input { cursor: pointer; accent-color: var(--accent); }
-
-    .selected-file {
-      font-family: var(--mono);
+    .pipeline span {
+      border: 1px solid var(--border);
+      padding: 6px 10px;
       font-size: 12px;
-      color: var(--text-dim);
+      color: var(--muted);
     }
-
-    /* PROGRESS */
-    .progress-bar {
-      height: 2px;
-      background: var(--border);
-      margin-top: 20px;
-      display: none;
-      overflow: hidden;
-    }
-
-    .progress-bar.active { display: block; }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--accent);
-      animation: scan 1.5s ease-in-out infinite;
-    }
-
-    @keyframes scan {
-      0%   { width: 0%;  margin-left: 0; }
-      50%  { width: 60%; margin-left: 20%; }
-      100% { width: 0%;  margin-left: 100%; }
-    }
-
-    .status-line {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--accent);
-      margin-top: 10px;
-      letter-spacing: 0.06em;
-      min-height: 16px;
-    }
-
-    /* ERROR */
-    .error-box {
-      border: 1px solid var(--danger);
-      padding: 16px 20px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--danger);
-      margin-top: 20px;
-      display: none;
-    }
-
-    .error-box.visible { display: block; }
-
-    /* RESULTS */
-    .results-section { display: none; }
-    .results-section.visible { display: block; }
-
-    .results-header {
-      padding-bottom: 16px;
-      margin-bottom: 32px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .results-title {
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      color: var(--text-dim);
-      text-transform: uppercase;
-    }
-
-    /* METRICS */
     .summary {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
-      margin-bottom: 32px;
+      margin-top: 12px;
     }
-
     .metric {
       border: 1px solid var(--border);
-      padding: 16px;
-      background: var(--surface);
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
     }
-
     .metric strong {
       display: block;
-      font-family: var(--mono);
-      font-size: 28px;
-      font-weight: 600;
-      color: var(--accent);
+      font-size: 22px;
       margin-bottom: 4px;
     }
-
-    .metric span {
-      font-size: 11px;
-      color: var(--text-dim);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    /* IMAGE COMPARISON */
     .comparison {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 2px;
-      margin-bottom: 32px;
-      background: var(--border);
+      gap: 8px;
+      margin-top: 16px;
     }
-
-    .image-panel {
-      background: var(--surface);
-      position: relative;
-    }
-
-    .image-panel-label {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      padding: 4px 10px;
-      z-index: 1;
-    }
-
-    .label-original { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
-    .label-redacted  { background: var(--danger); color: white; }
-
-    .image-panel img { width: 100%; display: block; }
-
-    /* FALLBACK PANEL */
-    .fallback-panel {
+    .comparison figure {
+      margin: 0;
+      background: #0e151a;
       border: 1px solid var(--border);
-      padding: 14px 16px;
-      font-family: var(--mono);
+      padding: 10px;
+    }
+    .comparison img {
+      width: 100%;
+      display: block;
+      background: #050709;
+    }
+    .comparison figcaption {
+      margin-bottom: 8px;
+      color: var(--muted);
       font-size: 12px;
-      color: var(--text-dim);
-      background: var(--surface);
-      white-space: pre-wrap;
-      margin-bottom: 32px;
-      display: none;
     }
-
-    .fallback-panel.visible { display: block; }
-
-    /* DETECTIONS TABLE */
-    .section-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-
-    .detections-table {
+    table {
       width: 100%;
       border-collapse: collapse;
-      font-family: var(--mono);
-      font-size: 12px;
-      margin-bottom: 32px;
+      margin-top: 12px;
+      font-size: 13px;
     }
-
-    .detections-table th {
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
       text-align: left;
-      padding: 10px 16px;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: var(--text-dim);
-      border-bottom: 1px solid var(--border);
-      font-weight: 400;
+      vertical-align: top;
     }
-
-    .detections-table td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    .detections-table tr:last-child td { border-bottom: none; }
-    .detections-table tr:hover td { background: var(--accent-dim); }
-
-    .class-tag {
+    th { color: var(--muted); font-weight: 600; }
+    .pill {
       display: inline-block;
-      padding: 3px 10px;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      font-weight: 600;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
     }
-
-    .tag-name { background: #ff9f4322; color: var(--name-color); }
-    .tag-id   { background: #00e09622; color: var(--id-color); }
-    .tag-age  { background: #74b9ff22; color: var(--age-color); }
-    .tag-date { background: #a29bfe22; color: var(--date-color); }
-    .tag-time { background: #00d4ff22; color: var(--time-color); }
-
-    .conf-bar { display: flex; align-items: center; gap: 8px; }
-    .conf-track { width: 60px; height: 3px; background: var(--border); }
-    .conf-fill  { height: 100%; background: var(--success); }
-
-    .decision-redact { color: var(--danger); font-weight: 600; }
-    .decision-review { color: var(--warn); font-weight: 600; }
-    .decision-keep   { color: var(--text-dim); }
-
-    /* DOWNLOAD */
-    .btn-ghost {
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      padding: 10px 20px;
+    .pill-name { background: rgba(251,146,60,.15); color: var(--name); }
+    .pill-id { background: rgba(16,185,129,.15); color: var(--id); }
+    .pill-age { background: rgba(96,165,250,.15); color: var(--age); }
+    .pill-date { background: rgba(167,139,250,.15); color: var(--date); }
+    .pill-time { background: rgba(34,211,238,.15); color: var(--time); }
+    .decision-redact { color: var(--danger); font-weight: 700; }
+    .decision-review { color: var(--warn); font-weight: 700; }
+    .fallback {
+      margin-top: 10px;
+      padding: 10px;
       border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+      white-space: pre-wrap;
     }
-
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* FOOTER */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      padding: 0 0 28px;
+      color: var(--muted);
+      font-size: 13px;
     }
-
-    .footer-text {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-dim);
-      letter-spacing: 0.06em;
-    }
-
-    .pipeline-steps {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-dim);
-      letter-spacing: 0.04em;
-    }
-
-    .pipeline-steps span { color: var(--accent); }
-
     @media (max-width: 900px) {
-      main, header, footer { padding-left: 20px; padding-right: 20px; }
-      .summary    { grid-template-columns: repeat(2, 1fr); }
-      .comparison { grid-template-columns: 1fr; }
+      .grid, .comparison, .summary { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-
-<header>
-  <div class="logo-mark">
-    <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="16" height="16" stroke="#00d4ff" stroke-width="1.2"/>
-      <line x1="5" y1="9" x2="13" y2="9" stroke="#00d4ff" stroke-width="1.2"/>
-      <line x1="9" y1="5" x2="9" y2="13" stroke="#00d4ff" stroke-width="1.2"/>
-      <rect x="6" y="3" width="6" height="3" fill="#0a0f14" stroke="#00d4ff" stroke-width="0.8"/>
-    </svg>
-  </div>
-  <div>
-    <div class="logo-text">MEDDEID</div>
-    <div class="logo-sub">Desidentificación visual de imágenes médicas</div>
-  </div>
-
-</header>
-
-<main>
-  <!-- UPLOAD -->
-  <div class="upload-section">
-    <div class="upload-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff" />
-      <div class="upload-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-      </div>
-      <div class="upload-label">Arrastra una radiografía o <span>selecciona un archivo</span></div>
-      <div class="upload-hint">PNG · JPG · JPEG · BMP · TIF · TIFF</div>
+  <header>
+    <div class="title">
+      <h1>Medical DeID Integrated</h1>
+      <p>Entrenamiento YOLO, OCR robusto, politica de decision y redaccion en un solo proyecto.</p>
     </div>
+    <div class="badge">YOLO -> OCR -> DECISION -> REDACTION</div>
+  </header>
 
-    <div class="action-row">
-      <button class="btn btn-primary" id="processBtn" disabled>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5 3 19 12 5 21 5 3"/>
-        </svg>
-        PROCESAR
-      </button>
-      <label class="fallback-label">
-        <input type="checkbox" id="fallbackToggle" />
-        Activar fallback OCR full-image
+  <main class="grid">
+    <section class="card">
+      <h2>Procesar Imagen</h2>
+      <label class="dropzone" id="dropzone">
+        <input id="fileInput" type="file" accept=".png,.jpg,.jpeg,.bmp,.tif,.tiff" />
+        <div>Arrastra una imagen medica aqui o hace click para seleccionarla.</div>
       </label>
-      <span class="selected-file" id="selectedFile"></span>
-    </div>
-
-    <div class="progress-bar" id="progressBar"><div class="progress-fill"></div></div>
-    <div class="status-line" id="statusLine"></div>
-    <div class="error-box" id="errorBox"></div>
-  </div>
-
-  <!-- RESULTS -->
-  <div class="results-section" id="resultsSection">
-
-    <div class="results-header">
-      <div class="results-title">Resultado</div>
-    </div>
-
-    <div class="summary">
-      <div class="metric"><strong id="regionsFound">0</strong><span>Regiones</span></div>
-      <div class="metric"><strong id="regionsRedacted">0</strong><span>Redactadas</span></div>
-      <div class="metric"><strong id="regionsReview">0</strong><span>Review</span></div>
-      <div class="metric"><strong id="processingTime">0s</strong><span>Tiempo</span></div>
-    </div>
-
-    <div class="comparison">
-      <div class="image-panel">
-        <div class="image-panel-label label-original">ORIGINAL</div>
-        <img id="originalImg" src="" alt="Original" />
+      <div class="controls">
+        <button id="runBtn" disabled>Ejecutar Pipeline</button>
+        <label><input id="fallbackToggle" type="checkbox" /> Activar fallback OCR full-image</label>
+        <span id="selectedFile"></span>
       </div>
-      <div class="image-panel">
-        <div class="image-panel-label label-redacted">REDACTADO</div>
-        <img id="redactedImg" src="" alt="Redactado" />
+      <div class="status" id="statusLine"></div>
+      <div class="pipeline">
+        <span>1. Entrenamiento</span>
+        <span>2. Deteccion</span>
+        <span>3. OCR</span>
+        <span>4. Decision</span>
+        <span>5. Redaccion</span>
       </div>
-    </div>
 
-    <div class="fallback-panel" id="fallbackPanel"></div>
+      <div class="summary" id="summaryPanel" hidden>
+        <div class="metric"><strong id="regionsFound">0</strong><span>Regiones</span></div>
+        <div class="metric"><strong id="regionsRedacted">0</strong><span>Redactadas</span></div>
+        <div class="metric"><strong id="regionsReview">0</strong><span>Review</span></div>
+        <div class="metric"><strong id="processingTime">0s</strong><span>Tiempo</span></div>
+      </div>
 
-    <div class="section-label">Detecciones</div>
-    <table class="detections-table">
-      <thead>
-        <tr>
-          <th>Clase</th>
-          <th>Texto OCR</th>
-          <th>Confianza YOLO</th>
-          <th>Decisión</th>
-          <th>Razón</th>
-        </tr>
-      </thead>
-      <tbody id="detectionsBody"></tbody>
-    </table>
+      <div class="comparison" id="comparisonPanel" hidden>
+        <figure>
+          <figcaption>Original</figcaption>
+          <img id="originalImg" alt="Original" />
+        </figure>
+        <figure>
+          <figcaption>Redactada</figcaption>
+          <img id="redactedImg" alt="Redactada" />
+        </figure>
+      </div>
 
-    <a class="btn-ghost" id="downloadBtn" href="#" download="redacted.png">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
-      </svg>
-      Descargar imagen redactada
-    </a>
+      <a class="ghost" id="downloadLink" hidden>Descargar imagen redactada</a>
+      <div class="fallback" id="fallbackPanel" hidden></div>
+    </section>
 
-  </div>
-</main>
+    <section class="card">
+      <h2>Detecciones</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Clase</th>
+            <th>OCR</th>
+            <th>Conf YOLO</th>
+            <th>Decision</th>
+            <th>Razon</th>
+          </tr>
+        </thead>
+        <tbody id="detectionsBody">
+          <tr><td colspan="5">Todavia no se proceso ninguna imagen.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
 
-<footer>
-  <div class="footer-text">Treelogic Hackathon · Reto Desidentificación</div>
-  <div class="pipeline-steps">
-    <span>YOLO</span> → OCR → <span>Decisión</span> → Redacción
-  </div>
-</footer>
+  <footer>
+    Proyecto integrado para entender tanto el producto final como el proceso tecnico que llevo a el.
+  </footer>
 
-<script>
-  const fileInput       = document.getElementById('fileInput');
-  const dropZone        = document.getElementById('dropZone');
-  const processBtn      = document.getElementById('processBtn');
-  const fallbackToggle  = document.getElementById('fallbackToggle');
-  const selectedFile    = document.getElementById('selectedFile');
-  const progressBar     = document.getElementById('progressBar');
-  const statusLine      = document.getElementById('statusLine');
-  const errorBox        = document.getElementById('errorBox');
-  const resultsSection  = document.getElementById('resultsSection');
-  const originalImg     = document.getElementById('originalImg');
-  const redactedImg     = document.getElementById('redactedImg');
-  const detectionsBody  = document.getElementById('detectionsBody');
-  const downloadBtn     = document.getElementById('downloadBtn');
-  const fallbackPanel   = document.getElementById('fallbackPanel');
-  const regionsFound    = document.getElementById('regionsFound');
-  const regionsRedacted = document.getElementById('regionsRedacted');
-  const regionsReview   = document.getElementById('regionsReview');
-  const processingTime  = document.getElementById('processingTime');
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const runBtn = document.getElementById('runBtn');
+    const fallbackToggle = document.getElementById('fallbackToggle');
+    const selectedFile = document.getElementById('selectedFile');
+    const statusLine = document.getElementById('statusLine');
+    const summaryPanel = document.getElementById('summaryPanel');
+    const comparisonPanel = document.getElementById('comparisonPanel');
+    const originalImg = document.getElementById('originalImg');
+    const redactedImg = document.getElementById('redactedImg');
+    const downloadLink = document.getElementById('downloadLink');
+    const fallbackPanel = document.getElementById('fallbackPanel');
+    const detectionsBody = document.getElementById('detectionsBody');
+    const regionsFound = document.getElementById('regionsFound');
+    const regionsRedacted = document.getElementById('regionsRedacted');
+    const regionsReview = document.getElementById('regionsReview');
+    const processingTime = document.getElementById('processingTime');
 
-  let currentFile = null;
+    let currentFile = null;
 
-  const CLASS_TAGS = {
-    name: 'tag-name', id: 'tag-id', age: 'tag-age', date: 'tag-date', time: 'tag-time'
-  };
+    const pillClass = {
+      name: 'pill-name',
+      id: 'pill-id',
+      age: 'pill-age',
+      date: 'pill-date',
+      time: 'pill-time'
+    };
 
-  fileInput.addEventListener('change', e => {
-    if (e.target.files[0]) loadFile(e.target.files[0]);
-  });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) {
+        loadFile(fileInput.files[0]);
+      }
+    });
 
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
-  });
+    dropzone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropzone.classList.add('drag');
+    });
 
-  function loadFile(file) {
-    currentFile = file;
-    selectedFile.textContent = '';
-    processBtn.disabled = false;
-    errorBox.classList.remove('visible');
-    resultsSection.classList.remove('visible');
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
 
-    dropZone.classList.add('has-file');
-    dropZone.querySelector('.upload-icon').innerHTML = `
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>`;
-    dropZone.querySelector('.upload-label').innerHTML =
-      `<span style="color:var(--accent)">${escapeHtml(file.name)}</span>`;
-    dropZone.querySelector('.upload-hint').textContent = 'Archivo listo · haz clic para cambiar';
+    dropzone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('drag');
+      if (event.dataTransfer.files[0]) {
+        loadFile(event.dataTransfer.files[0]);
+      }
+    });
 
-    const reader = new FileReader();
-    reader.onload = e => { originalImg.src = e.target.result; };
-    reader.readAsDataURL(file);
-  }
+    function loadFile(file) {
+      currentFile = file;
+      selectedFile.textContent = file.name;
+      runBtn.disabled = false;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        originalImg.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
 
-  function resetDropZone() {
-    dropZone.classList.remove('has-file');
-    dropZone.querySelector('.upload-icon').innerHTML = `
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-        <polyline points="17 8 12 3 7 8"/>
-        <line x1="12" y1="3" x2="12" y2="15"/>
-      </svg>`;
-    dropZone.querySelector('.upload-label').innerHTML =
-      `Arrastra una radiografía o <span>selecciona un archivo</span>`;
-    dropZone.querySelector('.upload-hint').textContent = 'PNG · JPG · JPEG · BMP · TIF · TIFF';
-  }
-
-  processBtn.addEventListener('click', async () => {
-    if (!currentFile) return;
-
-    processBtn.disabled = true;
-    progressBar.classList.add('active');
-    errorBox.classList.remove('visible');
-    resultsSection.classList.remove('visible');
-
-    const steps = [
-      '› detectando regiones con YOLO...',
-      '› extrayendo texto con OCR...',
-      '› aplicando decisión HIPAA...',
-      '› redactando imagen...',
-    ];
-    let stepIdx = 0;
-    statusLine.textContent = steps[stepIdx++];
-    const stepInterval = setInterval(() => {
-      if (stepIdx < steps.length) statusLine.textContent = steps[stepIdx++];
-    }, 800);
-
-    try {
+    async function processFile() {
+      if (!currentFile) return;
+      statusLine.textContent = 'Ejecutando pipeline integrado...';
       const formData = new FormData();
       formData.append('file', currentFile);
-      const query = fallbackToggle.checked ? '?enable_fallback=true' : '';
-      const res = await fetch(`/deidentify${query}`, { method: 'POST', body: formData });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const report = JSON.parse(res.headers.get('X-Report'));
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-
-      redactedImg.src = url;
-      downloadBtn.href = url;
-      downloadBtn.download = `redacted_${currentFile.name}`;
-
-      regionsFound.textContent    = report.summary.regions_found;
-      regionsRedacted.textContent = report.summary.redacted;
-      regionsReview.textContent   = report.summary.review;
-      processingTime.textContent  = `${report.processing_time_s}s`;
-
-      if (fallbackToggle.checked) {
-        fallbackPanel.classList.add('visible');
-        if (report.fallback_used && report.fallback_ocr && report.fallback_ocr.text) {
-          fallbackPanel.textContent = `Fallback OCR usado.\nTexto detectado:\n${report.fallback_ocr.text}`;
-        } else if (report.fallback_used) {
-          fallbackPanel.textContent = 'Fallback OCR usado, pero no produjo texto legible.';
-        } else {
-          fallbackPanel.textContent = 'Fallback OCR no fue necesario.';
+      try {
+        const query = fallbackToggle.checked ? '?enable_fallback=true' : '';
+        const imageResponse = await fetch(`/deidentify${query}`, { method: 'POST', body: formData });
+        if (!imageResponse.ok) {
+          throw new Error(`HTTP ${imageResponse.status}`);
         }
-      } else {
-        fallbackPanel.classList.remove('visible');
+        const report = JSON.parse(imageResponse.headers.get('X-Report'));
+        const imageBlob = await imageResponse.blob();
+        const imageUrl = URL.createObjectURL(imageBlob);
+
+        redactedImg.src = imageUrl;
+        downloadLink.href = imageUrl;
+        downloadLink.download = `redacted_${currentFile.name}`;
+        downloadLink.hidden = false;
+
+        regionsFound.textContent = report.summary.regions_found;
+        regionsRedacted.textContent = report.summary.redacted;
+        regionsReview.textContent = report.summary.review;
+        processingTime.textContent = `${report.processing_time_s}s`;
+        summaryPanel.hidden = false;
+        comparisonPanel.hidden = false;
+
+        if (fallbackToggle.checked) {
+          fallbackPanel.hidden = false;
+          if (report.fallback_used && report.fallback_ocr && report.fallback_ocr.text) {
+            fallbackPanel.textContent = `Fallback OCR usado.\nTexto detectado:\n${report.fallback_ocr.text}`;
+          } else if (report.fallback_used) {
+            fallbackPanel.textContent = 'Fallback OCR usado, pero no produjo texto legible.';
+          } else {
+            fallbackPanel.textContent = 'Fallback OCR no fue necesario.';
+          }
+        } else {
+          fallbackPanel.hidden = true;
+        }
+
+        renderDetections(report.detections);
+        statusLine.textContent = 'Pipeline finalizado.';
+      } catch (error) {
+        statusLine.textContent = `Error: ${error.message}`;
       }
-
-      renderDetections(report.detections);
-      resultsSection.classList.add('visible');
-      statusLine.textContent = '› pipeline finalizado.';
-    } catch (err) {
-      errorBox.textContent = `Error: ${err.message}. Verifica que la API esté corriendo.`;
-      errorBox.classList.add('visible');
-      statusLine.textContent = '';
-    } finally {
-      clearInterval(stepInterval);
-      progressBar.classList.remove('active');
-      processBtn.disabled = false;
     }
-  });
 
-  function renderDetections(detections) {
-    if (!detections.length) {
-      detectionsBody.innerHTML = `<tr><td colspan="5" style="color:var(--text-dim);padding:20px 16px;">No se detectó información sensible.</td></tr>`;
-      return;
-    }
-    detectionsBody.innerHTML = detections.map(d => {
-      const confPct  = Math.round(d.detector_conf * 100);
-      const tagClass = CLASS_TAGS[d.class_name] || 'tag-name';
-      return `
+    function renderDetections(detections) {
+      if (!detections.length) {
+        detectionsBody.innerHTML = '<tr><td colspan="5">No se detectaron regiones sensibles.</td></tr>';
+        return;
+      }
+      detectionsBody.innerHTML = detections.map((detection) => `
         <tr>
-          <td><span class="class-tag ${tagClass}">${escapeHtml(d.class_name.toUpperCase())}</span></td>
-          <td style="color:var(--text)">${escapeHtml(d.ocr_text || '') || '<span style="color:var(--text-dim)">—</span>'}</td>
-          <td>
-            <div class="conf-bar">
-              <div class="conf-track"><div class="conf-fill" style="width:${confPct}%"></div></div>
-              <span style="font-size:11px;color:var(--text-dim)">${confPct}%</span>
-            </div>
-          </td>
-          <td class="decision-${escapeHtml(d.decision)}">${escapeHtml(d.decision.toUpperCase())}</td>
-          <td style="color:var(--text-dim);font-size:11px">${escapeHtml(d.reason)}</td>
+          <td><span class="pill ${pillClass[detection.class_name] || ''}">${detection.class_name.toUpperCase()}</span></td>
+          <td>${escapeHtml(detection.ocr_text || '') || 'Sin OCR legible'}</td>
+          <td>${Math.round(detection.detector_conf * 100)}%</td>
+          <td class="decision-${detection.decision}">${detection.decision.toUpperCase()}</td>
+          <td>${escapeHtml(detection.reason)}</td>
         </tr>
-      `;
-    }).join('');
-  }
+      `).join('');
+    }
 
-  function escapeHtml(text) {
-    return String(text).replace(/[&<>"']/g, c => (
-      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-    ));
-  }
-</script>
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    runBtn.addEventListener('click', processFile);
+  </script>
 </body>
 </html>

@@ -46,19 +46,28 @@ Entregables obligatorios:
 
 ### 1. Preparar entorno
 
-Desde PowerShell, en la raiz del repo:
+Desde la raiz del repo, ejecutar el script correspondiente a tu sistema operativo:
+
+**Windows (PowerShell):**
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 .\.venv\Scripts\Activate.ps1
 ```
 
-El script `setup.ps1`:
+**macOS / Linux (Bash):**
 
-- crea `.venv` si no existe
-- actualiza `pip`
-- instala dependencias desde `requirements.txt`
-- ejecuta `python check_env.py`
+```bash
+bash setup.sh
+source .venv/bin/activate
+```
+
+Ambos scripts:
+
+- crean `.venv` si no existe
+- actualizan `pip`
+- instalan dependencias desde `requirements.txt`
+- ejecutan `python check_env.py`
 
 ### 2. Confirmar prerequisitos
 
@@ -72,7 +81,7 @@ Para ejecutar el proyecto correctamente se necesita:
 
 Chequeo rapido:
 
-```powershell
+```sh
 python check_env.py
 ```
 
@@ -80,7 +89,7 @@ python check_env.py
 
 Agregar una o mas imagenes de prueba en la carpeta local `samples/` y ejecutar:
 
-```powershell
+```sh
 python -m app.cli smoke
 ```
 
@@ -92,7 +101,7 @@ Resultado esperado:
 
 ### 4. Levantar API y UI
 
-```powershell
+```sh
 python -m app.cli serve --host 127.0.0.1 --port 8000
 ```
 
@@ -215,7 +224,7 @@ Para no modificar el dataset original, este repo crea un staging temporal compat
 
 ### Flujo de reentrenamiento
 
-```powershell
+```sh
 python -m app.cli train
 ```
 
@@ -300,7 +309,7 @@ Clases esperadas:
 
 ### Falta Tesseract
 
-En Windows:
+**Windows:**
 
 ```powershell
 winget install UB-Mannheim.TesseractOCR
@@ -310,4 +319,16 @@ Si no queda en `PATH`:
 
 ```powershell
 $env:TESSERACT_CMD="C:\Program Files\Tesseract-OCR\tesseract.exe"
+```
+
+**macOS:**
+
+```bash
+brew install tesseract
+```
+
+**Linux (Debian/Ubuntu):**
+
+```bash
+sudo apt-get install -y tesseract-ocr
 ```

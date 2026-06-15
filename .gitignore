@@ -55,5 +55,5 @@ temp/
 # Training and external data
 full_dataset/images/
 full_dataset/labels/
-full_dataset\hackathon_TREE_AIBiomed\images/
-full_dataset\hackathon_TREE_AIBiomed\labels/
+full_dataset/hackathon_TREE_AIBiomed/images/
+full_dataset/hackathon_TREE_AIBiomed/labels/

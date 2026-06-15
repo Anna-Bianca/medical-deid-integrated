@@ -1,3 +1,8 @@
+<!-- file: docs/TESTING.md -->
+<!-- description: Collects the local testing and validation steps for the medical de-identification project. -->
+<!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
+<!-- date: 15/06/2026 -->
+
 # Testing local
 
 ## Preparacion

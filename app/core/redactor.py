@@ -1,3 +1,8 @@
+# file: app/core/redactor.py
+# description: Builds fine-grained masks for redactable text regions and applies biharmonic inpainting to the image.
+# author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi
+# date: 15/06/2026
+
 from __future__ import annotations
 
 import cv2
@@ -7,7 +12,7 @@ from .config import AppConfig
 from .types import ProcessedDetection
 
 
-INPAINT_METHODS = ("biharmonic", "telea", "ns")
+REDACTION_METHOD = "biharmonic"
 MIN_COMPONENT_AREA = 2
 CHARACTER_MIN_SEGMENTED_COVERAGE = 0.35
 TOKEN_MIN_SEGMENTED_COVERAGE = 0.12
@@ -24,6 +29,17 @@ def _normalize_box(
     image_shape: tuple[int, int],
     padding: int,
 ) -> tuple[int, int, int, int] | None:
+    """
+    Converts an `(x, y, w, h)` box into clamped corner coordinates with padding.
+
+    Args:
+        box (tuple[int, int, int, int]): Bounding box expressed as `(x, y, width, height)`.
+        image_shape (tuple[int, int]): Image shape as `(height, width)`.
+        padding (int): Extra pixels to expand around the box on each side.
+
+    Returns:
+        tuple[int, int, int, int] | None: Clamped `(x1, y1, x2, y2)` corners, or `None` if invalid.
+    """
     height, width = image_shape
     x, y, w, h = box
     x1 = max(0, x - padding)
@@ -40,6 +56,17 @@ def _roi_box(
     image_shape: tuple[int, int],
     padding: int,
 ) -> tuple[int, int, int, int] | None:
+    """
+    Expands a corner-based ROI while keeping it inside image bounds.
+
+    Args:
+        box (tuple[int, int, int, int]): ROI expressed as `(x1, y1, x2, y2)`.
+        image_shape (tuple[int, int]): Image shape as `(height, width)`.
+        padding (int): Extra pixels to expand around the ROI on each side.
+
+    Returns:
+        tuple[int, int, int, int] | None: Clamped expanded ROI, or `None` if it collapses.
+    """
     height, width = image_shape
     x1, y1, x2, y2 = box
     x1 = max(0, x1 - padding)
@@ -52,6 +79,19 @@ def _roi_box(
 
 
 def _apply_biharmonic_inpaint(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """
+    Applies scikit-image biharmonic inpainting over the masked pixels.
+
+    Args:
+        image (np.ndarray): Source BGR image as an unsigned 8-bit array.
+        mask (np.ndarray): Boolean-like mask where non-zero pixels must be inpainted.
+
+    Returns:
+        np.ndarray: Inpainted image with the same shape as the input.
+
+    Raises:
+        ImportError: If `scikit-image` is not installed in the active environment.
+    """
     try:
         from skimage.restoration import inpaint
     except ImportError as exc:
@@ -65,23 +105,17 @@ def _apply_biharmonic_inpaint(image: np.ndarray, mask: np.ndarray) -> np.ndarray
     return np.clip(result * 255.0, 0, 255).astype(np.uint8)
 
 
-def _apply_opencv_inpaint(image: np.ndarray, mask: np.ndarray, *, ns: bool, radius: int) -> np.ndarray:
-    method = cv2.INPAINT_NS if ns else cv2.INPAINT_TELEA
-    mask_uint8 = (mask.astype(np.uint8) * 255)
-    return cv2.inpaint(image, mask_uint8, radius, method)
-
-
-def _apply_inpaint_method(image: np.ndarray, mask: np.ndarray, method: str, radius: int) -> np.ndarray:
-    if method == "biharmonic":
-        return _apply_biharmonic_inpaint(image, mask)
-    if method == "telea":
-        return _apply_opencv_inpaint(image, mask, ns=False, radius=radius)
-    if method == "ns":
-        return _apply_opencv_inpaint(image, mask, ns=True, radius=radius)
-    raise ValueError(f"Unsupported inpainting method '{method}'. Available: {', '.join(INPAINT_METHODS)}")
-
-
 def _segment_text_pixels(image: np.ndarray, region: tuple[int, int, int, int]) -> np.ndarray:
+    """
+    Segments likely text pixels inside a cropped ROI.
+
+    Args:
+        image (np.ndarray): Source BGR image from which the ROI is extracted.
+        region (tuple[int, int, int, int]): ROI expressed as `(x1, y1, x2, y2)`.
+
+    Returns:
+        np.ndarray: Binary mask of segmented text pixels in ROI-local coordinates.
+    """
     x1, y1, x2, y2 = region
     crop = image[y1:y2, x1:x2]
     if crop.size == 0:
@@ -139,6 +173,15 @@ def _segment_text_pixels(image: np.ndarray, region: tuple[int, int, int, int]) -
 
 
 def _filter_connected_components(mask: np.ndarray) -> tuple[np.ndarray, int]:
+    """
+    Removes implausibly small or oversized connected components from a binary mask.
+
+    Args:
+        mask (np.ndarray): Binary mask to filter.
+
+    Returns:
+        tuple[np.ndarray, int]: Filtered mask and number of kept components.
+    """
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
     kept = np.zeros_like(mask, dtype=np.uint8)
     kept_components = 0
@@ -153,6 +196,16 @@ def _filter_connected_components(mask: np.ndarray) -> tuple[np.ndarray, int]:
 
 
 def _fill_region(mask: np.ndarray, region: tuple[int, int, int, int]) -> None:
+    """
+    Fills a rectangular region of a mask with foreground pixels.
+
+    Args:
+        mask (np.ndarray): Target mask to update in-place.
+        region (tuple[int, int, int, int]): Region expressed as `(x1, y1, x2, y2)`.
+
+    Returns:
+        None: The input mask is modified in-place.
+    """
     x1, y1, x2, y2 = region
     mask[y1:y2, x1:x2] = 255
 
@@ -162,6 +215,17 @@ def _box_mask_from_boxes(
     image_shape: tuple[int, int],
     padding: int,
 ) -> np.ndarray:
+    """
+    Builds a full-image mask by filling all normalized character boxes.
+
+    Args:
+        boxes (list[tuple[int, int, int, int]]): Character boxes expressed as `(x, y, w, h)`.
+        image_shape (tuple[int, int]): Image shape as `(height, width)`.
+        padding (int): Extra pixels to add around each box before filling.
+
+    Returns:
+        np.ndarray: Binary mask with all valid boxes rasterized.
+    """
     mask = np.zeros(image_shape, dtype=np.uint8)
     for box in boxes:
         region = _normalize_box(box, image_shape, padding)
@@ -176,6 +240,17 @@ def _expand_region(
     image_shape: tuple[int, int],
     extra_padding: int,
 ) -> tuple[int, int, int, int]:
+    """
+    Expands a corner-based region by a fixed number of pixels.
+
+    Args:
+        region (tuple[int, int, int, int]): Region expressed as `(x1, y1, x2, y2)`.
+        image_shape (tuple[int, int]): Image shape as `(height, width)`.
+        extra_padding (int): Padding to add on each side.
+
+    Returns:
+        tuple[int, int, int, int]: Expanded region clamped to image bounds.
+    """
     if extra_padding <= 0:
         return region
     x1, y1, x2, y2 = region
@@ -189,6 +264,16 @@ def _expand_region(
 
 
 def _dilate_mask(mask: np.ndarray, pixels: int) -> np.ndarray:
+    """
+    Dilates a binary mask with an elliptical kernel.
+
+    Args:
+        mask (np.ndarray): Binary mask to dilate.
+        pixels (int): Radius-like dilation size in pixels.
+
+    Returns:
+        np.ndarray: Dilated mask, or the original mask if dilation is unnecessary.
+    """
     if pixels <= 0 or not np.any(mask):
         return mask
     kernel_size = (pixels * 2) + 1
@@ -205,6 +290,21 @@ def _mask_from_boxes(
     segment_dilation: int,
     fallback_padding: int,
 ) -> tuple[np.ndarray, bool]:
+    """
+    Builds a text mask from token boxes using segmentation with box-based fallbacks.
+
+    Args:
+        image (np.ndarray): Source BGR image used for ROI segmentation.
+        boxes (list[tuple[int, int, int, int]]): Token boxes expressed as `(x, y, w, h)`.
+        image_shape (tuple[int, int]): Image shape as `(height, width)`.
+        padding (int): Padding applied before segmenting each token box.
+        min_coverage (float): Minimum segmented coverage required to trust the segmented mask.
+        segment_dilation (int): Dilation amount applied after successful segmentation.
+        fallback_padding (int): Padding used when falling back to full-box masking.
+
+    Returns:
+        tuple[np.ndarray, bool]: Full-image mask and whether any token used the box fallback path.
+    """
     mask = np.zeros(image_shape, dtype=np.uint8)
     used_box_fallback = False
     for box in boxes:
@@ -235,6 +335,18 @@ def _mark_redaction_source(
     image_shape: tuple[int, int],
     config: AppConfig,
 ) -> np.ndarray:
+    """
+    Chooses the best available masking strategy for one redactable detection.
+
+    Args:
+        processed (ProcessedDetection): Detection plus OCR data to annotate with mask metadata.
+        image (np.ndarray): Source BGR image used for token segmentation when needed.
+        image_shape (tuple[int, int]): Image shape as `(height, width)`.
+        config (AppConfig): Runtime redaction settings controlling granularity and padding.
+
+    Returns:
+        np.ndarray: Full-image binary mask for the selected source, or an empty mask if unavailable.
+    """
     char_boxes = [character.box for character in processed.ocr.characters]
     token_boxes = [token.box for token in processed.ocr.tokens]
 
@@ -278,17 +390,22 @@ def _mark_redaction_source(
     return np.zeros(image_shape, dtype=np.uint8)
 
 
-def _redaction_methods(config: AppConfig) -> list[str]:
-    if config.compare_inpainting_methods:
-        return list(INPAINT_METHODS)
-    return [config.redaction_strategy]
-
-
 def redact_image(
     image: np.ndarray,
     detections: list[ProcessedDetection],
     config: AppConfig,
-) -> tuple[np.ndarray, dict[str, np.ndarray], np.ndarray, list[str]]:
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Builds a combined redaction mask and applies biharmonic inpainting to the image.
+
+    Args:
+        image (np.ndarray): Source BGR image to redact.
+        detections (list[ProcessedDetection]): Processed detections whose `decision` may require redaction.
+        config (AppConfig): Runtime redaction settings controlling mask construction.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Redacted image and combined binary redaction mask.
+    """
     image_shape = image.shape[:2]
     redaction_mask = np.zeros(image_shape, dtype=np.uint8)
 
@@ -299,21 +416,14 @@ def redact_image(
         if np.any(mask):
             redaction_mask = np.maximum(redaction_mask, mask)
 
-    methods = _redaction_methods(config)
-    variants: dict[str, np.ndarray] = {}
     if np.any(redaction_mask):
         bool_mask = redaction_mask.astype(bool)
-        for method in methods:
-            variants[method] = _apply_inpaint_method(image.copy(), bool_mask, method, config.inpaint_radius)
+        redacted_image = _apply_biharmonic_inpaint(image.copy(), bool_mask)
+    else:
+        redacted_image = image.copy()
 
     for processed in detections:
         if processed.decision.action == "redact":
-            processed.redaction_method = (
-                f"inpaint_compare[{','.join(methods)}]" if config.compare_inpainting_methods else f"inpaint_{methods[0]}"
-            )
+            processed.redaction_method = f"inpaint_{REDACTION_METHOD}"
 
-    primary_method = config.redaction_strategy if config.redaction_strategy in variants else None
-    if primary_method is None and methods:
-        primary_method = methods[0]
-    primary_image = variants.get(primary_method, image.copy())
-    return primary_image, variants, redaction_mask, methods
+    return redacted_image, redaction_mask

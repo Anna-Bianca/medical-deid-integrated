@@ -1,3 +1,8 @@
+<!-- file: README.md -->
+<!-- description: Repository guide for setup, training, inference, troubleshooting, and current redaction policy. -->
+<!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
+<!-- date: 15/06/2026 -->
+
 # Medical DeID Integrated
 
 Solucion integrada para desidentificacion de imagenes medicas que combina:
@@ -60,6 +65,11 @@ La prioridad del diseño es:
 - preservar privacidad
 - conservar la mayor cantidad posible de informacion medica alrededor del texto
 - mantener trazabilidad de por que algo fue redactado o enviado a revision
+
+Policy actual por clase:
+
+- `name`, `id`, `age`, `date` -> `redact`
+- `time` -> `redact` solo si OCR confirma un patron horario valido; si no, `review`
 
 ## Como esta estructurado el repo
 

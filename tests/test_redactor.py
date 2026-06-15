@@ -1,6 +1,10 @@
+# file: tests/test_redactor.py
+# description: Verifies mask selection and inpainting orchestration behavior for the redactor module.
+# author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi
+# date: 15/06/2026
+
 from __future__ import annotations
 
-from dataclasses import replace
 import unittest
 from unittest.mock import patch
 
@@ -12,10 +16,28 @@ from app.core.types import Decision, Detection, OCRCharacter, OCRResult, OCRToke
 
 
 def _config() -> AppConfig:
+    """
+    Loads the default application configuration for redactor tests.
+
+    Args:
+        None
+
+    Returns:
+        AppConfig: Configuration populated from the local environment defaults.
+    """
     return AppConfig.from_env()
 
 
 def _processed_detection(ocr: OCRResult) -> ProcessedDetection:
+    """
+    Builds a redactable processed detection with stable geometry for tests.
+
+    Args:
+        ocr (OCRResult): OCR payload to attach to the synthetic detection.
+
+    Returns:
+        ProcessedDetection: Detection configured to exercise mask-selection behavior.
+    """
     return ProcessedDetection(
         detection=Detection(
             class_id=0,
@@ -30,12 +52,16 @@ def _processed_detection(ocr: OCRResult) -> ProcessedDetection:
 
 
 class RedactorTests(unittest.TestCase):
+    """Covers the mask source selection and no-op behavior of the redactor."""
+
     def setUp(self) -> None:
+        """Creates a synthetic image and reusable mask fixture for each test case."""
         self.image = np.full((60, 60, 3), 255, dtype=np.uint8)
         self.segmented_mask = np.zeros((60, 60), dtype=np.uint8)
         self.segmented_mask[12:18, 12:24] = 255
 
     def test_uses_character_mask_when_available(self) -> None:
+        """Prefers character boxes when character OCR geometry is available."""
         processed = _processed_detection(
             OCRResult(
                 text="AB",
@@ -52,14 +78,13 @@ class RedactorTests(unittest.TestCase):
         def fake_box_mask_from_boxes(*args, **kwargs) -> np.ndarray:
             return self.segmented_mask.copy()
 
-        def fake_inpaint(image: np.ndarray, mask: np.ndarray, method: str, radius: int) -> np.ndarray:
+        def fake_inpaint(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
             captured["mask"] = mask.copy()
-            captured["method"] = method
             return image
 
         with (
             patch("app.core.redactor._box_mask_from_boxes", side_effect=fake_box_mask_from_boxes),
-            patch("app.core.redactor._apply_inpaint_method", side_effect=fake_inpaint),
+            patch("app.core.redactor._apply_biharmonic_inpaint", side_effect=fake_inpaint),
         ):
             redact_image(self.image, [processed], _config())
 
@@ -68,9 +93,9 @@ class RedactorTests(unittest.TestCase):
         self.assertIn("mask", captured)
         self.assertGreater(int(captured["mask"].sum()), 0)
         self.assertEqual(processed.mask_pixel_count, int(np.count_nonzero(self.segmented_mask)))
-        self.assertEqual(captured["method"], "biharmonic")
 
     def test_falls_back_to_token_mask(self) -> None:
+        """Uses token segmentation when character-level geometry is not available."""
         processed = _processed_detection(
             OCRResult(
                 text="AB",
@@ -80,21 +105,23 @@ class RedactorTests(unittest.TestCase):
 
         with (
             patch("app.core.redactor._mask_from_boxes", return_value=(self.segmented_mask.copy(), False)),
-            patch("app.core.redactor._apply_inpaint_method", return_value=self.image),
+            patch("app.core.redactor._apply_biharmonic_inpaint", return_value=self.image),
         ):
             redact_image(self.image, [processed], _config())
 
         self.assertEqual(processed.mask_source, "token_segmented")
 
     def test_falls_back_to_roi_when_no_ocr_geometry_exists(self) -> None:
+        """Falls back to the expanded ROI when OCR provides no usable geometry."""
         processed = _processed_detection(OCRResult(text=""))
 
-        with patch("app.core.redactor._apply_inpaint_method", return_value=self.image):
+        with patch("app.core.redactor._apply_biharmonic_inpaint", return_value=self.image):
             redact_image(self.image, [processed], _config())
 
         self.assertEqual(processed.mask_source, "roi_fallback")
 
     def test_uses_character_box_mask_when_available(self) -> None:
+        """Records the expected mask source when a character-box mask is used."""
         processed = _processed_detection(
             OCRResult(
                 text="AB",
@@ -104,37 +131,27 @@ class RedactorTests(unittest.TestCase):
 
         with (
             patch("app.core.redactor._box_mask_from_boxes", return_value=self.segmented_mask.copy()),
-            patch("app.core.redactor._apply_inpaint_method", return_value=self.image),
+            patch("app.core.redactor._apply_biharmonic_inpaint", return_value=self.image),
         ):
             redact_image(self.image, [processed], _config())
 
         self.assertEqual(processed.mask_source, "character_box_mask")
 
-    def test_compare_mode_runs_all_methods_with_same_mask(self) -> None:
+    def test_returns_original_image_when_nothing_is_redacted(self) -> None:
+        """Returns the original image and an empty mask when all detections are review-only."""
         processed = _processed_detection(
             OCRResult(
                 text="AB",
                 characters=[OCRCharacter(text="A", box=(12, 12, 4, 6), source_pass="char")],
             )
         )
-        config = replace(_config(), compare_inpainting_methods=True, redaction_strategy="telea")
-        seen: list[tuple[str, np.ndarray]] = []
+        processed.decision = Decision(action="review", reason="manual_review_needed")
 
-        def fake_inpaint(image: np.ndarray, mask: np.ndarray, method: str, radius: int) -> np.ndarray:
-            seen.append((method, mask.copy()))
-            return image
+        redacted_image, redaction_mask = redact_image(self.image, [processed], _config())
 
-        with (
-            patch("app.core.redactor._box_mask_from_boxes", return_value=self.segmented_mask.copy()),
-            patch("app.core.redactor._apply_inpaint_method", side_effect=fake_inpaint),
-        ):
-            _, variants, _, methods = redact_image(self.image, [processed], config)
-
-        self.assertEqual(methods, ["biharmonic", "telea", "ns"])
-        self.assertEqual(set(variants.keys()), {"biharmonic", "telea", "ns"})
-        self.assertEqual([method for method, _ in seen], methods)
-        self.assertTrue(all(np.array_equal(mask, seen[0][1]) for _, mask in seen[1:]))
-        self.assertEqual(processed.redaction_method, "inpaint_compare[biharmonic,telea,ns]")
+        self.assertTrue(np.array_equal(redacted_image, self.image))
+        self.assertEqual(int(np.count_nonzero(redaction_mask)), 0)
+        self.assertIsNone(processed.redaction_method)
 
 
 if __name__ == "__main__":

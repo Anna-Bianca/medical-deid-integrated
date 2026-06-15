@@ -1,3 +1,8 @@
+<!-- file: docs/ARCHITECTURE.md -->
+<!-- description: High-level architecture overview of the integrated medical image de-identification solution. -->
+<!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
+<!-- date: 15/06/2026 -->
+
 # Arquitectura final
 
 ## Resumen
@@ -63,8 +68,8 @@ Ese directorio no se versiona por privacidad, pero forma parte del contrato oper
 
 ## Politica funcional v1
 
-- `name`, `id`, `age` -> `redact`
-- `date`, `time`
+- `name`, `id`, `age`, `date` -> `redact`
+- `time`
   - `redact` si OCR confirma patron legible
   - `review` si OCR es ambiguo o insuficiente
 

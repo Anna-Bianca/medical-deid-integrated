@@ -1,18 +1,16 @@
 {
   "filename": "0009a9fb-eb905e90-824cad7c-16d40468-007f0038_annotated.png",
-  "processing_time_s": 19.525,
+  "processing_time_s": 41.286,
   "detector_used": "yolo",
   "fallback_used": false,
   "redaction_methods_run": [
-    "biharmonic",
-    "telea",
-    "ns"
+    "biharmonic"
   ],
-  "redaction_mask_pixel_count": 2518,
+  "redaction_mask_pixel_count": 3165,
   "summary": {
     "regions_found": 4,
-    "redacted": 3,
-    "review": 1
+    "redacted": 4,
+    "review": 0
   },
   "fallback_ocr": null,
   "detections": [
@@ -48,7 +46,7 @@
       "decision": "redact",
       "reason": "class_policy_always_redact",
       "source": "roi_yolo",
-      "redaction_method": "inpaint_compare[biharmonic,telea,ns]",
+      "redaction_method": "inpaint_biharmonic",
       "mask_source": "character_box_mask",
       "mask_pixel_count": 1148
     },
@@ -80,7 +78,7 @@
       "decision": "redact",
       "reason": "class_policy_always_redact",
       "source": "roi_yolo",
-      "redaction_method": "inpaint_compare[biharmonic,telea,ns]",
+      "redaction_method": "inpaint_biharmonic",
       "mask_source": "character_box_mask",
       "mask_pixel_count": 831
     },
@@ -114,7 +112,7 @@
       "decision": "redact",
       "reason": "class_policy_always_redact",
       "source": "roi_yolo",
-      "redaction_method": "inpaint_compare[biharmonic,telea,ns]",
+      "redaction_method": "inpaint_biharmonic",
       "mask_source": "character_box_mask",
       "mask_pixel_count": 539
     },
@@ -135,7 +133,7 @@
         47
       ],
       "ocr_text": "08-FEB-2017",
-      "ocr_character_count": 0,
+      "ocr_character_count": 11,
       "ocr_token_count": 1,
       "ocr_conf_summary": {
         "count": 1,
@@ -145,12 +143,12 @@
       "ocr_support_passes": [
         "gray_upscale_x3"
       ],
-      "decision": "review",
-      "reason": "date_text_ambiguous",
+      "decision": "redact",
+      "reason": "class_policy_always_redact",
       "source": "roi_yolo",
-      "redaction_method": null,
-      "mask_source": null,
-      "mask_pixel_count": 0
+      "redaction_method": "inpaint_biharmonic",
+      "mask_source": "character_box_mask",
+      "mask_pixel_count": 1227
     }
   ]
 }

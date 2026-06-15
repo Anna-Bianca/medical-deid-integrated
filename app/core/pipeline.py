@@ -1,3 +1,8 @@
+# file: app/core/pipeline.py
+# description: Orchestrates detection, OCR, decision policy, redaction, and result packaging for each image.
+# author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi
+# date: 15/06/2026
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,10 +19,29 @@ from .types import OCRResult, PipelineResult, ProcessedDetection
 
 
 def _log(message: str) -> None:
+    """
+    Emits a pipeline-scoped log line.
+
+    Args:
+        message (str): Human-readable message to print to stdout.
+
+    Returns:
+        None: The message is written to stdout with immediate flush.
+    """
     print(f"[Pipeline] {message}", flush=True)
 
 
 def _preview_text(text: str, *, limit: int = 100) -> str:
+    """
+    Condenses OCR text into a single-line preview for logs.
+
+    Args:
+        text (str): OCR text that may contain line breaks or surrounding whitespace.
+        limit (int): Maximum number of characters to keep in the preview.
+
+    Returns:
+        str: Normalized preview text, `<empty>` when no visible content is available.
+    """
     normalized = " | ".join(part.strip() for part in text.splitlines() if part.strip())
     if not normalized:
         return "<empty>"
@@ -25,12 +49,34 @@ def _preview_text(text: str, *, limit: int = 100) -> str:
 
 
 class DeidentificationPipeline:
+    """Runs the full de-identification workflow over medical images."""
+
     def __init__(self, config: AppConfig, model_path: Path | None = None) -> None:
+        """
+        Creates a pipeline instance with detector and OCR dependencies.
+
+        Args:
+            config (AppConfig): Runtime configuration shared by detector, OCR, and redaction stages.
+            model_path (Path | None): Optional override for the YOLO weights file.
+
+        Returns:
+            None: The pipeline stores initialized detector and OCR components.
+        """
         self.config = config
         self.detector = YoloDetector(config, model_path=model_path)
         self.ocr = OCRExtractor(config)
 
     def run_on_image(self, image: np.ndarray, filename: str) -> PipelineResult:
+        """
+        Executes detection, OCR, decision, and redaction on an in-memory image.
+
+        Args:
+            image (np.ndarray): Color image in OpenCV BGR format.
+            filename (str): Source filename used for logging and reporting.
+
+        Returns:
+            PipelineResult: Structured output containing detections, redacted image, and diagnostics.
+        """
         height, width = image.shape[:2]
         _log(
             f"Starting run for '{filename}' with image size {width}x{height}. "
@@ -79,7 +125,7 @@ class DeidentificationPipeline:
         elif not processed:
             _log("Skipping fallback OCR because it is disabled.")
 
-        redacted, redacted_variants, redaction_mask, redaction_methods_run = redact_image(image, processed, self.config)
+        redacted, redaction_mask = redact_image(image, processed, self.config)
         redacted_count = sum(1 for item in processed if item.decision.action == "redact")
         review_count = sum(1 for item in processed if item.decision.action == "review")
         _log(
@@ -92,12 +138,22 @@ class DeidentificationPipeline:
             redacted_image=redacted,
             fallback_used=fallback_used,
             fallback_ocr=fallback_ocr,
-            redacted_variants=redacted_variants,
             redaction_mask=redaction_mask,
-            redaction_methods_run=redaction_methods_run,
         )
 
     def run_on_path(self, image_path: Path) -> PipelineResult:
+        """
+        Loads an image from disk and runs the full pipeline on it.
+
+        Args:
+            image_path (Path): Path to the image file to process.
+
+        Returns:
+            PipelineResult: Structured output for the processed image.
+
+        Raises:
+            FileNotFoundError: If the image cannot be read from the provided path.
+        """
         image = cv2.imread(str(image_path))
         if image is None:
             raise FileNotFoundError(f"Could not read image: {image_path}")

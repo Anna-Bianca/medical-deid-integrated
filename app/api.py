@@ -1,3 +1,8 @@
+# file: app/api.py
+# description: Exposes the FastAPI service and static UI for the medical de-identification pipeline.
+# author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi
+# date: 15/06/2026
+
 from __future__ import annotations
 
 import io
@@ -42,10 +47,28 @@ app.mount("/static", StaticFiles(directory=str(config.static_dir)), name="static
 
 
 def _log(message: str) -> None:
+    """
+    Emits an API-scoped log line.
+
+    Args:
+        message (str): Human-readable message to print to stdout.
+
+    Returns:
+        None: The message is written to stdout with immediate flush.
+    """
     print(f"[API] {message}", flush=True)
 
 
 def _format_model_summary() -> str:
+    """
+    Formats a short textual summary of the loaded detector model.
+
+    Args:
+        None
+
+    Returns:
+        str: Summary of model path, class alignment, and a preview of model classes.
+    """
     try:
         summary = pipeline_default.detector.describe_model()
     except Exception as exc:
@@ -64,6 +87,15 @@ def _format_model_summary() -> str:
 
 @app.on_event("startup")
 def log_startup_state() -> None:
+    """
+    Logs the key runtime configuration when the FastAPI app starts.
+
+    Args:
+        None
+
+    Returns:
+        None: Startup state is emitted to stdout for diagnostics.
+    """
     _log("Starting FastAPI server for Medical DeID Integrated.")
     _log(f"Project root: {config.project_root}")
     _log(f"Full dataset directory: {config.full_dataset_dir}")
@@ -78,16 +110,29 @@ def log_startup_state() -> None:
         f"Tesseract command: {config.tesseract_cmd or 'auto-detect from PATH/common Windows installs'}"
     )
     _log(
-        f"Redaction strategy: {config.redaction_strategy}, granularity={config.redaction_granularity}, "
-        f"fallback={config.redaction_fallback}, compare={config.compare_inpainting_methods}, "
+        f"Redaction strategy: biharmonic, granularity={config.redaction_granularity}, "
+        f"fallback={config.redaction_fallback}, "
         f"padding(character={config.character_mask_padding}, token={config.token_mask_padding}, "
-        f"roi={config.roi_mask_padding}), inpaint_radius={config.inpaint_radius}"
+        f"roi={config.roi_mask_padding})"
     )
     _log(f"Detector summary: {_format_model_summary()}")
     _log("UI available at '/'. API endpoints available at '/health', '/deidentify', and '/deidentify/report'.")
 
 
 def _decode_upload(file: UploadFile, data: bytes) -> np.ndarray:
+    """
+    Validates and decodes an uploaded image file into an OpenCV matrix.
+
+    Args:
+        file (UploadFile): Uploaded file metadata supplied by FastAPI.
+        data (bytes): Raw bytes read from the uploaded file.
+
+    Returns:
+        np.ndarray: Decoded BGR image.
+
+    Raises:
+        HTTPException: If the filename is missing, the extension is unsupported, or decoding fails.
+    """
     if not file.filename:
         raise HTTPException(status_code=400, detail="Missing filename.")
     if not file.filename.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")):
@@ -99,11 +144,29 @@ def _decode_upload(file: UploadFile, data: bytes) -> np.ndarray:
 
 
 def _select_pipeline(enable_fallback: bool) -> DeidentificationPipeline:
+    """
+    Selects the default or fallback-enabled pipeline instance.
+
+    Args:
+        enable_fallback (bool): Whether full-image OCR fallback should be enabled for the request.
+
+    Returns:
+        DeidentificationPipeline: Pipeline instance matching the requested fallback behavior.
+    """
     return pipeline_fallback if enable_fallback else pipeline_default
 
 
 @app.get("/health")
 def health() -> dict:
+    """
+    Returns a lightweight service health payload.
+
+    Args:
+        None
+
+    Returns:
+        dict: Service status and presence checks for key model assets.
+    """
     _log("Health check requested.")
     return {
         "status": "ok",
@@ -118,6 +181,16 @@ async def deidentify_report(
     file: UploadFile = File(...),
     enable_fallback: bool = Query(default=False),
 ) -> JSONResponse:
+    """
+    Runs the pipeline and returns only the structured JSON report.
+
+    Args:
+        file (UploadFile): Uploaded image to inspect.
+        enable_fallback (bool): Whether to use the fallback-enabled pipeline variant.
+
+    Returns:
+        JSONResponse: JSON response containing the pipeline report.
+    """
     started = time.time()
     contents = await file.read()
     _log(
@@ -143,6 +216,19 @@ async def deidentify(
     file: UploadFile = File(...),
     enable_fallback: bool = Query(default=False),
 ) -> StreamingResponse:
+    """
+    Runs the pipeline and returns the redacted image plus summary headers.
+
+    Args:
+        file (UploadFile): Uploaded image to redact.
+        enable_fallback (bool): Whether to use the fallback-enabled pipeline variant.
+
+    Returns:
+        StreamingResponse: PNG image stream with report metadata in response headers.
+
+    Raises:
+        HTTPException: If the redacted image cannot be encoded as PNG.
+    """
     started = time.time()
     contents = await file.read()
     _log(
@@ -179,5 +265,14 @@ async def deidentify(
 
 @app.get("/")
 def root() -> FileResponse:
+    """
+    Serves the static single-page UI.
+
+    Args:
+        None
+
+    Returns:
+        FileResponse: Static HTML document for the local UI.
+    """
     _log(f"Serving UI document from {Path(config.static_dir / 'index.html')}.")
     return FileResponse(config.static_dir / "index.html")

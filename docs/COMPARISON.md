@@ -1,3 +1,8 @@
+<!-- file: docs/COMPARISON.md -->
+<!-- description: Compares the OCR-first and YOLO-first solution directions explored during the project. -->
+<!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
+<!-- date: 15/06/2026 -->
+
 # Comparacion consolidada de enfoques
 
 ## OCR-first
@@ -36,4 +41,3 @@ La mejor solucion no era elegir una sola, sino combinar:
 - OCR robusto para validar y leer
 - una politica de decision unificada
 - una misma superficie de uso para entrenamiento, inferencia y demo
-

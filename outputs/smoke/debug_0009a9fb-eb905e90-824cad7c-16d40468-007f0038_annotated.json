@@ -1,51 +1,367 @@
 {
   "filename": "0009a9fb-eb905e90-824cad7c-16d40468-007f0038_annotated.png",
   "redaction_methods_run": [
-    "biharmonic",
-    "telea",
-    "ns"
+    "biharmonic"
   ],
-  "redaction_mask_pixel_count": 2518,
+  "redaction_mask_pixel_count": 3165,
   "detections": [
     {
       "class_name": "name",
       "decision": "redact",
-      "redaction_method": "inpaint_compare[biharmonic,telea,ns]",
+      "redaction_method": "inpaint_biharmonic",
       "mask_source": "character_box_mask",
       "mask_pixel_count": 1148,
       "ocr_character_count": 10,
       "ocr_token_count": 3,
-      "ocr_debug": null
+      "ocr_debug": {
+        "pass_debug": [
+          {
+            "pass_name": "standard_gray",
+            "raw_preview": [
+              "JANE ORTEGA"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "inverted_gray",
+            "raw_preview": [
+              "JANE ORTEGA"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "clahe",
+            "raw_preview": [
+              "\u2018JANE ORTEGA"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "clahe_inverted",
+            "raw_preview": [
+              "\u201cJANE ORTEGA"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "adaptive_binary",
+            "raw_preview": [
+              "JANE ORTEGA\u2019"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "adaptive_binary_inv",
+            "raw_preview": [
+              "JANE ORTEGA\u2019"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "unsharp",
+            "raw_preview": [
+              "\u201cJANE ORTEGA\u2019"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "unsharp_inverted",
+            "raw_preview": [
+              "\u201cJANE ORTEGA\u2019"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "gray_upscale_x2",
+            "raw_preview": [
+              "JANE ORTEGA"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "gray_upscale_x3",
+            "raw_preview": [
+              "JANE ORTEGA"
+            ],
+            "detections": 2
+          },
+          {
+            "pass_name": "unsharp_upscale_x3",
+            "raw_preview": [
+              "\u201cJANE ORTEGA\u2019"
+            ],
+            "detections": 2
+          }
+        ]
+      }
     },
     {
       "class_name": "id",
       "decision": "redact",
-      "redaction_method": "inpaint_compare[biharmonic,telea,ns]",
+      "redaction_method": "inpaint_biharmonic",
       "mask_source": "character_box_mask",
       "mask_pixel_count": 831,
       "ocr_character_count": 6,
       "ocr_token_count": 0,
-      "ocr_debug": null
+      "ocr_debug": {
+        "pass_debug": [
+          {
+            "pass_name": "standard_gray",
+            "raw_preview": [
+              "938],0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "inverted_gray",
+            "raw_preview": [
+              "938),0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "clahe",
+            "raw_preview": [
+              "938),0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "clahe_inverted",
+            "raw_preview": [
+              "938),0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "adaptive_binary",
+            "raw_preview": [
+              "\u2018O35L5F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "adaptive_binary_inv",
+            "raw_preview": [
+              "\u2018O35L8F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp",
+            "raw_preview": [
+              "938],0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp_inverted",
+            "raw_preview": [
+              "-938],0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "gray_upscale_x2",
+            "raw_preview": [
+              "9381,0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "gray_upscale_x3",
+            "raw_preview": [
+              "938)0F"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp_upscale_x3",
+            "raw_preview": [
+              "938]0F"
+            ],
+            "detections": 1
+          }
+        ]
+      }
     },
     {
       "class_name": "age",
       "decision": "redact",
-      "redaction_method": "inpaint_compare[biharmonic,telea,ns]",
+      "redaction_method": "inpaint_biharmonic",
       "mask_source": "character_box_mask",
       "mask_pixel_count": 539,
       "ocr_character_count": 3,
       "ocr_token_count": 1,
-      "ocr_debug": null
+      "ocr_debug": {
+        "pass_debug": [
+          {
+            "pass_name": "standard_gray",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "inverted_gray",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "clahe",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "clahe_inverted",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "adaptive_binary",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "adaptive_binary_inv",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp_inverted",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "gray_upscale_x2",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "gray_upscale_x3",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp_upscale_x3",
+            "raw_preview": [
+              "33%"
+            ],
+            "detections": 1
+          }
+        ]
+      }
     },
     {
       "class_name": "date",
-      "decision": "review",
-      "redaction_method": null,
-      "mask_source": null,
-      "mask_pixel_count": 0,
-      "ocr_character_count": 0,
+      "decision": "redact",
+      "redaction_method": "inpaint_biharmonic",
+      "mask_source": "character_box_mask",
+      "mask_pixel_count": 1227,
+      "ocr_character_count": 11,
       "ocr_token_count": 1,
-      "ocr_debug": null
+      "ocr_debug": {
+        "pass_debug": [
+          {
+            "pass_name": "standard_gray",
+            "raw_preview": [
+              "68-FEB-2017"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "inverted_gray",
+            "raw_preview": [
+              "68-FEB-2017"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "clahe",
+            "raw_preview": [
+              "08-FEB-2017"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "clahe_inverted",
+            "raw_preview": [
+              "08-FEB-2017"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "adaptive_binary",
+            "raw_preview": [
+              "88-FEB-2617,"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "adaptive_binary_inv",
+            "raw_preview": [
+              "88-FEB-2617,"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp",
+            "raw_preview": [
+              "68-FEB-26177"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp_inverted",
+            "raw_preview": [
+              "68-FEB-26177"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "gray_upscale_x2",
+            "raw_preview": [
+              "08-FEB-2017"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "gray_upscale_x3",
+            "raw_preview": [
+              "08-FEB-2017"
+            ],
+            "detections": 1
+          },
+          {
+            "pass_name": "unsharp_upscale_x3",
+            "raw_preview": [],
+            "detections": 0
+          }
+        ]
+      }
     }
   ],
   "fallback_ocr_debug": null

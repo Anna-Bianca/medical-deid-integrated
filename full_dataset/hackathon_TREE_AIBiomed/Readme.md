@@ -1,3 +1,8 @@
+<!-- file: full_dataset/hackathon_TREE_AIBiomed/Readme.md -->
+<!-- description: Documents the structure and annotation format of the medical radiography de-identification dataset. -->
+<!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
+<!-- date: 15/06/2026 -->
+
 # Dataset de Desidentificacion de Radiografias
 
 ## Descripcion

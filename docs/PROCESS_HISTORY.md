@@ -1,3 +1,8 @@
+<!-- file: docs/PROCESS_HISTORY.md -->
+<!-- description: Summarizes the technical evolution from earlier OCR-first work to the current integrated approach. -->
+<!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
+<!-- date: 15/06/2026 -->
+
 # Historia del proceso tecnico
 
 ## Problema

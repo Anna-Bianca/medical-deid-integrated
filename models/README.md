@@ -1,3 +1,8 @@
+<!-- file: models/README.md -->
+<!-- description: Describes the model artifacts stored in the repository and which weights are active. -->
+<!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
+<!-- date: 15/06/2026 -->
+
 # Modelos
 
 - `yolov8s.pt`: peso base oficial para el retraining reproducible documentado en este repo.

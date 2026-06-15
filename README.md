@@ -39,13 +39,8 @@ Este repositorio cubre el componente de **codigo fuente** de la entrega.
 Entregables obligatorios:
 
 - `Codigo fuente`: incluido en este repositorio
-- `Memoria tecnica PDF`: pendiente de adjuntar
-- `Video de evidencia`: pendiente de adjuntar
-
-Placeholders sugeridos para la entrega final:
-
-- `Memoria tecnica`: `docs/ENTREGA_MEMORIA_TECNICA.pdf` o URL externa
-- `Video de evidencia`: URL externa o referencia en release/drive
+- `Memoria tecnica PDF`: se entrega por el canal privado definido por el hackathon
+- `Video de evidencia`: se entrega por el canal privado definido por el hackathon
 
 ## Como evaluarlo en 2 minutos
 

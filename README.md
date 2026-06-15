@@ -1,135 +1,79 @@
 <!-- file: README.md -->
-<!-- description: Repository guide for setup, training, inference, troubleshooting, and current redaction policy. -->
+<!-- description: Hackathon-first project overview, evaluation guide, and technical entrypoint for the medical de-identification solution. -->
 <!-- author: Maria Victoria Anconetani; Anna Bianca Marzetti Biggi -->
 <!-- date: 15/06/2026 -->
 
 # Medical DeID Integrated
 
-Solucion integrada para desidentificacion de imagenes medicas que combina:
+## Reto y equipo
 
-- entrenamiento reproducible de un detector YOLO
-- OCR robusto multi-pass con Tesseract
-- politica de decision por clase y evidencia OCR
-- redaccion visual con inpainting fino
-- exposicion por `CLI`, `API` y `UI`
+**Reto Treelogic:** Desidentificacion visual de imagenes medicas.
 
-## Antes de empezar
+**Autoras:** Maria Victoria Anconetani y Anna Bianca Marzetti Biggi.
 
-### Aclaracion importante sobre el dataset
+Este repositorio contiene una solucion end-to-end para detectar y anonimizar informacion identificable incrustada en radiografias e imagenes medicas. El sistema combina deteccion YOLO, OCR robusto multi-pass, una politica de decision por clase y evidencia OCR, y una redaccion visual final basada en mascara fina e inpainting biharmonico.
 
-Las imagenes y labels disponibles en `full_dataset/` no siguen del todo buenas practicas de naming para entrenamiento directo con Ultralytics.
+## Resumen ejecutivo
 
-El caso concreto es este:
+La solucion prioriza dos objetivos simultaneos:
 
-- imagen: `algo_annotated.png`
-- label: `algo.txt`
+- proteger privacidad y reducir exposicion de PII
+- preservar la mayor cantidad posible de contexto medico util alrededor del texto sensible
 
-Ultralytics espera por default:
+Hoy el pipeline trata automaticamente como redactables las clases:
 
-- imagen: `algo.png`
-- label: `algo.txt`
+- `name`
+- `id`
+- `age`
+- `date`
 
-o bien:
+La clase `time` sigue una politica mas conservadora:
 
-- imagen: `algo_annotated.png`
-- label: `algo_annotated.txt`
+- `redact` si OCR confirma un patron horario valido
+- `review` si el OCR resulta ambiguo o insuficiente
 
-Por eso este repo agrega una etapa interna de normalizacion antes de entrenar. El dataset original no se toca: se prepara una copia temporal compatible dentro de `outputs/prepared_datasets/`.
+## Entrega del hackathon
 
-Tambien es importante que:
+Este repositorio cubre el componente de **codigo fuente** de la entrega.
 
-- `full_dataset/hackathon_TREE_AIBiomed/data.yaml` sea YAML puro
-- no contenga fences de Markdown como `````yaml````` o ``````
+Entregables obligatorios:
 
-## Que es esta solucion
+- `Codigo fuente`: incluido en este repositorio
+- `Memoria tecnica PDF`: pendiente de adjuntar
+- `Video de evidencia`: pendiente de adjuntar
 
-La solucion base es un pipeline Python local. La UI no es obligatoria.
+Placeholders sugeridos para la entrega final:
 
-El mismo sistema puede usarse de tres maneras:
+- `Memoria tecnica`: `docs/ENTREGA_MEMORIA_TECNICA.pdf` o URL externa
+- `Video de evidencia`: URL externa o referencia en release/drive
 
-- `CLI`: para entrenar, validar, probar y procesar lotes
-- `API`: para integrarlo con otro sistema via HTTP
-- `UI`: para demo manual de punta a punta sobre la API
-
-### En que se basa la solucion
-
-La estrategia es híbrida:
-
-1. YOLO detecta regiones candidatas de PII en la imagen
-2. OCR intenta leer el texto dentro de esas regiones
-3. una policy decide si cada deteccion debe ir a `redact` o `review`
-4. si la decision es `redact`, el texto se elimina con una mascara fina e inpainting
-
-La prioridad del diseño es:
-
-- preservar privacidad
-- conservar la mayor cantidad posible de informacion medica alrededor del texto
-- mantener trazabilidad de por que algo fue redactado o enviado a revision
-
-Policy actual por clase:
-
-- `name`, `id`, `age`, `date` -> `redact`
-- `time` -> `redact` solo si OCR confirma un patron horario valido; si no, `review`
-
-## Como esta estructurado el repo
-
-```text
-medical-deid-integrated/
-  app/
-    core/
-      config.py
-      detector_yolo.py
-      ocr_engine.py
-      decision_policy.py
-      redactor.py
-      pipeline.py
-      reporting.py
-    api.py
-    cli.py
-    train.py
-    visualizer.py
-    dataset_prep.py
-    static/
-  full_dataset/
-    hackathon_TREE_AIBiomed/
-      images/
-      labels/
-      data.yaml
-  models/
-  outputs/
-  samples/
-  docs/
-  check_env.py
-  setup.ps1
-```
-
-### Carpetas clave
-
-- `full_dataset/hackathon_TREE_AIBiomed/`: fuente de verdad para training y validation
-- `samples/`: imagenes reservadas para prueba manual fuera de `train` y `val`
-- `outputs/prepared_datasets/`: staging temporal generado por el repo para compatibilizar imagenes y labels
-- `outputs/train_runs/`: artefactos completos del entrenamiento YOLO
-- `models/`: peso base y modelo final activo
-
-## Flujo recomendado para ponerlo a funcionar
+## Como evaluarlo en 2 minutos
 
 ### 1. Preparar entorno
 
-Desde PowerShell, parado en la raiz del repo:
+Desde PowerShell, en la raiz del repo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 .\.venv\Scripts\Activate.ps1
 ```
 
+El script `setup.ps1`:
+
+- crea `.venv` si no existe
+- actualiza `pip`
+- instala dependencias desde `requirements.txt`
+- ejecuta `python check_env.py`
+
 ### 2. Confirmar prerequisitos
 
-Este proyecto necesita:
+Para ejecutar el proyecto correctamente se necesita:
 
 - Python 3.10+
-- Tesseract instalado
-- `full_dataset/hackathon_TREE_AIBiomed`
-- `models/yolov8s.pt` como peso base oficial
+- Tesseract instalado o accesible via `PATH`
+- `models/yolov8s.pt` para reentrenar
+- `full_dataset/hackathon_TREE_AIBiomed/` si se quiere reentrenar
+- una carpeta local `samples/` si se quiere correr `smoke` con imagenes propias
 
 Chequeo rapido:
 
@@ -137,61 +81,21 @@ Chequeo rapido:
 python check_env.py
 ```
 
-### 3. Instalar dependencias faltantes
+### 3. Probar inferencia local
 
-Si no corriste `setup.ps1`, o si agregaste dependencias nuevas:
-
-```powershell
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 4. Entrenar desde cero
-
-El entrypoint oficial es:
-
-```powershell
-python -m app.cli train
-```
-
-Ese comando:
-
-- toma `full_dataset/hackathon_TREE_AIBiomed`
-- prepara un dataset temporal compatible en `outputs/prepared_datasets/`
-- entrena con la receta `historical`
-- guarda artefactos en `outputs/train_runs/deidentification/`
-- copia el mejor modelo a `models/best.pt`
- 
-### 5. Reanudar entrenamiento si fue interrumpido
-
-Checkpoint esperado:
-
-```text
-outputs/train_runs/deidentification/weights/last.pt
-```
-
-Comandos:
-
-```powershell
-python -m app.cli train --resume
-python -m app.cli train --resume-from outputs/train_runs/deidentification/weights/last.pt
-```
-
-### 6. Probar el pipeline
-
-Smoke test sobre `samples/`:
+Agregar una o mas imagenes de prueba en la carpeta local `samples/` y ejecutar:
 
 ```powershell
 python -m app.cli smoke
 ```
 
-Procesamiento manual:
+Resultado esperado:
 
-```powershell
-python -m app.cli run --input samples --output outputs/manual_run --enable-full-image-fallback --save-debug-report
-```
+- se genera una imagen redactada en `outputs/smoke/`
+- se genera un `report_*.json`
+- opcionalmente, con flags debug, se generan `mask_*.png`, `overlay_*.png` y `debug_*.json`
 
-### 7. Levantar API y UI
+### 4. Levantar API y UI
 
 ```powershell
 python -m app.cli serve --host 127.0.0.1 --port 8000
@@ -203,120 +107,195 @@ Abrir luego:
 http://localhost:8000/
 ```
 
-## Entrenamiento reproducible en detalle
-
-### Defaults del baseline oficial
-
-- dataset: `full_dataset/hackathon_TREE_AIBiomed`
-- base weights: `models/yolov8s.pt`
-- profile: `historical`
-- epochs: `100`
-- img size: `640`
-- batch size: `8`
-
-### Comandos utiles
-
-```powershell
-python -m app.cli train
-python -m app.cli train --dataset-root full_dataset/hackathon_TREE_AIBiomed
-python -m app.cli train --base-weights models/yolov8s.pt --profile historical
-python -m app.cli train --skip-validate
-python -m app.cli train --resume
-```
-
-### Donde quedan los resultados del training
-
-Los archivos importantes quedan en:
-
-```text
-outputs/train_runs/deidentification/
-```
-
-En particular:
-
-- `results.png`: curvas y metricas por epoch
-- `results.csv`: valores tabulares por epoch
-- `weights/best.pt`: mejor checkpoint
-- `weights/last.pt`: ultimo checkpoint para resume
-
-Ademas, el repo copia el modelo final activo a:
-
-```text
-models/best.pt
-```
-
-## Como funciona la redaccion
-
-La redaccion ya no usa un rectangulo negro completo.
-
-Ahora el flujo es:
-
-1. se detecta una ROI con YOLO
-2. OCR obtiene tokens y, para detecciones redactables, tambien boxes por caracter
-3. se construye una mascara fina sobre los caracteres
-4. se aplica inpainting biharmonico
-
-Fallbacks:
-
-- si no hay caracteres OCR, usa boxes por token
-- si tampoco hay geometria OCR util, inpainta toda la ROI
-
-Eso permite preservar mejor el contenido medico alrededor del texto sensible.
-
-## API y UI
-
-### Endpoints principales
-
-- `GET /health`
-- `POST /deidentify`
-- `POST /deidentify/report`
-
-### Que devuelve cada uno
-
-- `/health`: estado del servicio y paths/config relevantes
-- `/deidentify`: imagen procesada + headers con resumen
-- `/deidentify/report`: solo reporte JSON del pipeline
-
-La UI en `/` consume esos endpoints y permite:
+La UI permite:
 
 - subir una imagen
 - ejecutar el pipeline
 - ver original vs procesada
 - inspeccionar detecciones, OCR y decisiones
 
-## Diagnostico rapido de problemas comunes
+## Resultados y evidencia tecnica
 
-### 1. `data.yaml` con error de sintaxis
+### Resultados de entrenamiento disponibles
 
-Revisar que `full_dataset/hackathon_TREE_AIBiomed/data.yaml` no tenga fences Markdown.
+El entrenamiento reproducible del detector YOLO ya produjo artefactos locales en `outputs/train_runs/deidentification/`.
 
-Contenido correcto:
+Metricas finales registradas en `results.csv`:
 
-```yaml
-train: images/train
-val: images/val
+- `precision(B)`: `0.99851`
+- `recall(B)`: `1.0`
+- `mAP50(B)`: `0.995`
+- `mAP50-95(B)`: `0.9449`
 
-nc: 5
+### Evidencia funcional esperada
 
-names:
-  0: name
-  1: id
-  2: age
-  3: date
-  4: time
+En una corrida `smoke` correcta, el jurado deberia poder verificar:
+
+- deteccion de regiones candidatas de PII
+- OCR por ROI
+- politica de decision por clase
+- redaccion final con inpainting biharmonico
+- generacion de reporte JSON y artefactos de depuracion locales
+
+Los artifacts locales de `samples/`, `outputs/smoke/`, `outputs/train_runs/` y `runs/` no se versionan en la version compartible del repositorio para evitar exposicion de PII.
+
+## Arquitectura de la solucion
+
+La estrategia es hibrida:
+
+1. YOLO detecta regiones candidatas de PII
+2. OCR multi-pass intenta leer y validar el texto dentro de cada ROI
+3. una policy decide si cada deteccion va a `redact` o `review`
+4. si la decision es `redact`, se construye una mascara fina y se aplica inpainting biharmonico
+
+Formas de uso:
+
+- `CLI`: entrenamiento, smoke, batch manual, visualizacion y server
+- `API`: integracion HTTP
+- `UI`: demo local sobre la API
+
+Documentacion tecnica complementaria:
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/PROCESS_HISTORY.md](docs/PROCESS_HISTORY.md)
+- [docs/TESTING.md](docs/TESTING.md)
+
+## Dataset, samples y reproducibilidad
+
+### Dataset de reentrenamiento
+
+La estructura esperada del dataset se documenta en:
+
+- [full_dataset/hackathon_TREE_AIBiomed/Readme.md](full_dataset/hackathon_TREE_AIBiomed/Readme.md)
+
+Se mantienen en git unicamente:
+
+- `full_dataset/hackathon_TREE_AIBiomed/data.yaml`
+- `full_dataset/hackathon_TREE_AIBiomed/Readme.md`
+
+No se versionan:
+
+- `full_dataset/hackathon_TREE_AIBiomed/images/`
+- `full_dataset/hackathon_TREE_AIBiomed/labels/`
+
+Motivo:
+
+- esas rutas pueden contener imagenes medicas y anotaciones con riesgo de PII
+
+### Muestras locales para inferencia
+
+La carpeta `samples/` es **local** y no se versiona.
+
+Si no existe, puede crearse manualmente. Las imagenes que se quieran probar con `smoke` deben colocarse alli. Formatos admitidos por la CLI:
+
+- `.png`
+- `.jpg`
+- `.jpeg`
+- `.bmp`
+- `.tif`
+- `.tiff`
+
+Importante:
+
+- cualquier archivo anadido a `samples/` se considera potencialmente sensible
+- `samples/` esta en `.gitignore`
+- no debe usarse para compartir imagenes del reto ni evidencia publica
+
+### Nota importante sobre naming del dataset
+
+El dataset fuente puede contener pares como:
+
+- imagen: `algo_annotated.png`
+- label: `algo.txt`
+
+Ultralytics espera por defecto:
+
+- `algo.png` + `algo.txt`
+
+o bien:
+
+- `algo_annotated.png` + `algo_annotated.txt`
+
+Para no modificar el dataset original, este repo crea un staging temporal compatible en `outputs/prepared_datasets/` antes de entrenar.
+
+### Flujo de reentrenamiento
+
+```powershell
+python -m app.cli train
 ```
 
-### 2. YOLO dice que todo es `background`
+Este comando:
 
-Eso suele indicar que no pudo matchear imagenes con labels.
+- toma `full_dataset/hackathon_TREE_AIBiomed`
+- prepara un staging temporal compatible
+- entrena con la receta `historical`
+- deja el mejor checkpoint activo en `models/best.pt`
 
-En este repo se resuelve automaticamente con la etapa de preparacion en `outputs/prepared_datasets/`.
+## API y superficies de uso
 
-### 3. El modelo detecta clases como `bed`, `person` o `class_59`
+Endpoints principales:
 
-Eso indica que `models/best.pt` no fue generado por este flujo y se esta usando un modelo generalista ajeno al problema medico.
+- `GET /health`
+- `POST /deidentify`
+- `POST /deidentify/report`
 
-Este proyecto espera exactamente:
+Resumen:
+
+- `/health`: estado del servicio y presencia de modelos
+- `/deidentify`: devuelve imagen redactada y headers con resumen
+- `/deidentify/report`: devuelve solo el reporte JSON
+
+## Limitaciones
+
+- La solucion esta ajustada al reto Treelogic y a la estructura del dataset disponible.
+- El rendimiento puede degradarse con layouts, resoluciones o estilos de anotacion muy distintos al dataset de entrenamiento.
+- La clase `time` aun depende de validacion OCR y puede caer en `review` si el texto es ambiguo.
+- La calidad del OCR influye directamente en la granularidad de la mascara fina y en algunos motivos de decision.
+- El sistema es una solucion experimental de hackathon, no un producto clinico validado.
+
+## Consideraciones eticas y de privacidad
+
+- Este proyecto aborda un problema real de privacidad en imagen medica, pero no sustituye procesos formales de gobierno del dato.
+- El repositorio compartible debe evitar incluir imagenes, labels, samples, reports o artifacts que puedan exponer PII.
+- Los artifacts de inferencia y entrenamiento deben tratarse como material local sensible.
+- Cualquier uso posterior sobre datos reales debe respetar la normativa aplicable de proteccion de datos y los acuerdos de uso del dataset.
+
+## Licencias y recursos de terceros
+
+Dependencias principales del proyecto:
+
+- Ultralytics YOLO
+- Tesseract OCR
+- OpenCV
+- scikit-image
+- FastAPI
+
+Consideraciones:
+
+- el codigo de este repositorio es propio del equipo salvo dependencias de terceros instaladas por licencia
+- cualquier uso de modelos, librerias, datasets o recursos externos debe respetar sus licencias correspondientes
+- el dataset del reto debe tratarse como recurso sensible y su uso debe limitarse al marco autorizado del hackathon
+
+## Uso de IA como apoyo durante el desarrollo
+
+Se utilizaron herramientas de IA como apoyo tecnico durante el desarrollo y la documentacion del proyecto:
+
+- Codex
+- Claude Code
+
+Estas herramientas se usaron como asistencia para exploracion tecnica, refactorizacion, documentacion y validacion operativa, mientras que el diseno, decisiones y cierre final del proyecto fueron responsabilidad del equipo autor.
+
+## Diagnostico rapido
+
+### `data.yaml` con error de sintaxis
+
+Revisar que `full_dataset/hackathon_TREE_AIBiomed/data.yaml` sea YAML puro y no contenga fences Markdown.
+
+### YOLO detecta clases ajenas al reto
+
+Si aparecen clases como `bed`, `person` o `class_59`, probablemente `models/best.pt` no corresponde al detector entrenado para este reto.
+
+Clases esperadas:
 
 - `0`: `name`
 - `1`: `id`
@@ -324,15 +303,7 @@ Este proyecto espera exactamente:
 - `3`: `date`
 - `4`: `time`
 
-### 4. Falla el inpainting
-
-Revisar que `scikit-image` este instalado:
-
-```powershell
-pip install -r requirements.txt
-```
-
-### 5. Falta Tesseract
+### Falta Tesseract
 
 En Windows:
 
@@ -345,45 +316,3 @@ Si no queda en `PATH`:
 ```powershell
 $env:TESSERACT_CMD="C:\Program Files\Tesseract-OCR\tesseract.exe"
 ```
-
-## Recorrido recomendado para un evaluador externo
-
-Si alguien ya tiene el dataset completo cargado en `full_dataset/`, el camino mas simple es:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
-.\.venv\Scripts\Activate.ps1
-python check_env.py
-python -m app.cli train
-python -m app.cli smoke
-python -m app.cli serve --host 127.0.0.1 --port 8000
-```
-
-Con eso puede:
-
-- reconstruir `models/best.pt`
-- validar un smoke test sobre `samples/`
-- abrir la UI y probar una imagen manualmente
-
-## Reproducibilidad
-
-Si alguien tiene acceso a:
-
-- `full_dataset/hackathon_TREE_AIBiomed`
-- `models/yolov8s.pt`
-
-puede reproducir el entrenamiento completo y regenerar el modelo activo desde este mismo repo, sin depender de otro proyecto externo.
-
-Contrato operativo del repo:
-
-- dataset canonico: `full_dataset/hackathon_TREE_AIBiomed`
-- peso base oficial: `models/yolov8s.pt`
-- modelo final activo: `models/best.pt`
-
-## Documentacion complementaria
-
-Ver tambien:
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [docs/PROCESS_HISTORY.md](docs/PROCESS_HISTORY.md)
-- [docs/TESTING.md](docs/TESTING.md)

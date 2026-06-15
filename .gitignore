@@ -47,13 +47,41 @@ logs/
 
 # Local runtime outputs
 outputs/manual_run/
+outputs/smoke/
+outputs/train_runs/*
+!outputs/train_runs/deidentification/
+outputs/train_runs/deidentification/*
+!outputs/train_runs/deidentification/BoxF1_curve.png
+!outputs/train_runs/deidentification/BoxP_curve.png
+!outputs/train_runs/deidentification/BoxPR_curve.png
+!outputs/train_runs/deidentification/BoxR_curve.png
+!outputs/train_runs/deidentification/confusion_matrix.png
+!outputs/train_runs/deidentification/confusion_matrix_normalized.png
+!outputs/train_runs/deidentification/labels.jpg
+!outputs/train_runs/deidentification/results.csv
+!outputs/train_runs/deidentification/results.png
 outputs/visualizations/
 outputs/prepared_datasets/
+runs/*
+!runs/detect/
+runs/detect/*
+!runs/detect/val/
+runs/detect/val/*
+!runs/detect/val/BoxF1_curve.png
+!runs/detect/val/BoxP_curve.png
+!runs/detect/val/BoxPR_curve.png
+!runs/detect/val/BoxR_curve.png
+!runs/detect/val/confusion_matrix.png
+!runs/detect/val/confusion_matrix_normalized.png
 tmp/
 temp/
+
+# Local samples and PII-sensitive evaluation assets
+samples/
 
 # Training and external data
 full_dataset/images/
 full_dataset/labels/
 full_dataset/hackathon_TREE_AIBiomed/images/
 full_dataset/hackathon_TREE_AIBiomed/labels/
+full_dataset/hackathon_TREE_AIBiomed/*.cache

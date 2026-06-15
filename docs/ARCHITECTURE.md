@@ -12,7 +12,7 @@ La solucion integrada toma lo mejor de los dos enfoques previos:
 - YOLO para localizar regiones candidatas de PII
 - OCR robusto multi-pass para validar y leer texto dentro de cada ROI
 - politica de decision por clase y evidencia OCR
-- redaccion final sobre la imagen
+- redaccion final mediante mascara fina e inpainting biharmonico
 - exposicion por CLI, API y UI
 
 ## Flujo end-to-end
@@ -20,12 +20,13 @@ La solucion integrada toma lo mejor de los dos enfoques previos:
 ```text
 full_dataset/hackathon_TREE_AIBiomed
   -> app.cli train / app.train
+  -> outputs/prepared_datasets/
   -> outputs/train_runs/
   -> models/best.pt
   -> detector YOLO
   -> OCR robusto por ROI
   -> politica de decision
-  -> redaccion
+  -> redaccion con mascara fina
   -> reporte JSON
   -> API / UI / batch CLI
 ```
@@ -38,7 +39,12 @@ El entrenamiento y la validacion usan exclusivamente:
 full_dataset/hackathon_TREE_AIBiomed
 ```
 
-Ese directorio no se versiona por privacidad, pero forma parte del contrato operativo del repo.
+En la version compartible del repositorio solo se conservan:
+
+- `full_dataset/hackathon_TREE_AIBiomed/data.yaml`
+- `full_dataset/hackathon_TREE_AIBiomed/Readme.md`
+
+Las carpetas `images/` y `labels/` quedan locales y fuera de git para evitar exposicion de PII.
 
 ## Modulos principales
 
@@ -55,7 +61,7 @@ Ese directorio no se versiona por privacidad, pero forma parte del contrato oper
   Decide `redact` o `review`.
 
 - `app/core/redactor.py`
-  Ennegrece regiones marcadas para redaccion.
+  Construye mascaras finas y aplica inpainting biharmonico sobre las regiones redactables.
 
 - `app/core/pipeline.py`
   Orquesta detector, OCR, decision y redaccion.

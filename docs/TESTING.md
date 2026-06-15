@@ -13,6 +13,7 @@
 4. Confirmar `models/yolov8s.pt`.
 5. Confirmar `full_dataset/hackathon_TREE_AIBiomed`.
 6. Si existe, confirmar `models/best.pt`.
+7. Si se desea correr `smoke`, crear una carpeta local `samples/` y colocar alli imagenes de prueba.
 
 ## Chequeo de entorno
 
@@ -42,6 +43,12 @@ python -m app.cli smoke
 
 Por default, `smoke` usa `samples/`, no `train` ni `val`.
 
+Importante:
+
+- `samples/` es una carpeta local y esta en `.gitignore`
+- las imagenes usadas en `samples/` pueden contener PII y no deben versionarse
+- los artifacts generados en `outputs/smoke/` tambien son locales y no se versionan
+
 ## Batch manual
 
 ```powershell
@@ -69,3 +76,12 @@ http://localhost:8000/
 - reportes JSON
 - si el fallback fue usado
 - si `models/best.pt` expone solo `name`, `id`, `age`, `date`, `time`
+
+## Nota de privacidad
+
+El flujo de validacion debe asumirse como local. No se deben subir a git:
+
+- imagenes de `samples/`
+- dataset bajo `full_dataset/.../images` y `labels`
+- reports, overlays o redacciones generadas en `outputs/smoke/`
+- artifacts de entrenamiento en `outputs/train_runs/`

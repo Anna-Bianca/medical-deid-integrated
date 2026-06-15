@@ -63,18 +63,45 @@ full_dataset/hackathon_TREE_AIBiomed/
 - `images/`: radiografias en formato PNG
 - `labels/`: anotaciones YOLO `.txt` correspondientes a cada imagen
 
-Cada imagen tiene un fichero `.txt` asociado con el mismo nombre base.
+## Como poblar el dataset para reentrenar
 
-Ejemplo:
+Para reentrenar el modelo se deben crear localmente estas carpetas:
 
-```text
-images/train/ed9c0dfc-ea25b576-0f8cc069-df4cdf14-0cd60eb7_annotated.png
-labels/train/ed9c0dfc-ea25b576-0f8cc069-df4cdf14-0cd60eb7.txt
-```
+- `images/train/`
+- `images/val/`
+- `labels/train/`
+- `labels/val/`
+
+Reglas practicas:
+
+- cada imagen en `images/train/` debe tener un label correspondiente en `labels/train/`
+- cada imagen en `images/val/` debe tener un label correspondiente en `labels/val/`
+- las anotaciones deben seguir el formato YOLO documentado arriba
+- `data.yaml` debe permanecer apuntando a `images/train` y `images/val`
+
+## Naming esperado por el repo
+
+Cada imagen debe tener un `.txt` asociado con el mismo nombre base o un nombre compatible con el staging del repo.
+
+El caso mas simple es:
+
+- `algo.png` + `algo.txt`
+
+Tambien se tolera el caso historico del reto:
+
+- imagen: `algo_annotated.png`
+- label: `algo.txt`
+
+Como Ultralytics espera matching por stem, el proyecto crea automaticamente un staging temporal en `outputs/prepared_datasets/` antes de entrenar.
+
+Si se arma un dataset nuevo desde cero, la opcion mas limpia es mantener el mismo stem entre imagen y label:
+
+- `algo.png` + `algo.txt`
+- o `algo_annotated.png` + `algo_annotated.txt`
 
 ## Division del dataset
 
-El dataset contiene aproximadamente:
+El dataset del reto contiene aproximadamente:
 
 - 400 imagenes en total
 - 80% para entrenamiento
@@ -84,15 +111,6 @@ Distribucion esperada:
 
 - Train: ~320 imagenes
 - Validation: ~80 imagenes
-
-## Uso previsto
-
-Este dataset esta disenado para:
-
-- desidentificacion automatica de radiografias
-- deteccion de informacion sensible en imagenes medicas
-- entrenamiento de modelos
-- investigacion en privacidad y anonimizacion medica
 
 ## Nota importante sobre `data.yaml`
 
@@ -125,9 +143,23 @@ train: images/train
 
 Si el archivo arranca con backticks, Ultralytics falla con un error de sintaxis YAML en la linea 1, columna 1.
 
-## Compatibilidad con el repo integrado
+## Uso de `samples/` para inferencia local
 
-En este dataset, varias imagenes usan nombres como `*_annotated.png` mientras que los labels originales usan el nombre base sin ese sufijo.
+La carpeta `samples/` no forma parte del dataset de entrenamiento. Se usa solo para pruebas manuales de inferencia con `python -m app.cli smoke`.
+
+Si se quieren probar imagenes manualmente:
+
+1. crear una carpeta local `samples/` en la raiz del repo si no existe
+2. copiar alli imagenes de prueba en formatos admitidos (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.tif`, `.tiff`)
+3. ejecutar `python -m app.cli smoke`
+
+Importante:
+
+- `samples/` es local y esta en `.gitignore`
+- no debe subirse a git
+- puede contener material con riesgo de PII
+
+## Compatibilidad con el repo integrado
 
 Para no modificar el dataset fuente, el repo integrado prepara un staging temporal dentro de `outputs/prepared_datasets/` antes de entrenar. En ese staging, los labels se copian con el mismo stem que la imagen para que Ultralytics pueda matchearlos correctamente.
 
@@ -137,3 +169,4 @@ Para no modificar el dataset fuente, el repo integrado prepara un staging tempor
 - Las imagenes contienen informacion sensible delimitada mediante bounding boxes.
 - El dataset esta orientado a tareas de deteccion de objetos y anonimizacion automatica.
 - El conjunto mezcla imagenes reales y datos sinteticos para conservar privacidad y anonimato de pacientes.
+- En la version compartible del repositorio no se incluyen `images/` ni `labels/`; solo se mantienen `data.yaml` y este `Readme.md` para documentar la estructura esperada.
